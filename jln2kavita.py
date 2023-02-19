@@ -54,7 +54,7 @@ def copy_epub_files(src_dir, dest_dir):
     dest = os.path.abspath(dest_dir)
 
     if not os.path.isdir(src):
-        raise argparse.ArgumentTypeError('Source directory does not exist: {}'.format(src_dir))
+        raise argparse.ArgumentTypeError(f'Source directory does not exist: {src_dir}')
 
     if not os.path.exists(dest):
         os.makedirs(dest)
