@@ -1,7 +1,7 @@
 # jln2kavita
 
 Converts a JLN folder structure to a Kavita folder structure. Only EPUB files are copied to the target directory. It also adds the series name and
-series index to the EPUB metadata using Calibre.
+series index to the EPUB metadata using Calibre. It tries to prioritize official translations over fan translations. If the official translation is found, the fan translation isn't copied.
 
 ## Usage
 
