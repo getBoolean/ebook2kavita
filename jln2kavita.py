@@ -75,7 +75,15 @@ def copy_epub_files(src_dir, dest_dir):
 
         epub_folder_path = os.path.join(series_folder_path, 'EPUB')
 
+        # Possible paths:
+        #   TODO: /Series/Part */EPUB/*.epub
+        #   /Series/EPUB/*.epub
+        #   /Series/EPUB/Official/*.epub
+        #   /Series/Official/EPUB/*.epub
+        #   /Series/*.epub
+
         if not os.path.isdir(epub_folder_path):
+            # Skips Ascendence of a Bookworm
             continue
 
         official_folder_found = False
