@@ -132,8 +132,8 @@ def find_series_epub_files(series_folder_path: str) -> list[str]:
     else:
         epub_folder_path = series_folder_path
 
-    epub_files = []
     if root_part_folders:
+        epub_files = []
         for part_folder in root_part_folders:
             part_epub_folder_path = os.path.join(part_folder, 'EPUB')
             has_part_epub_folder = os.path.isdir(part_epub_folder_path)
