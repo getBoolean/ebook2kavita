@@ -1,7 +1,7 @@
 # jln2kavita
 
-Converts a JLN folder structure to a Kavita folder structure. Only EPUB files are copied to the target directory. It also adds the series name and
-series index to the EPUB metadata using Calibre. It tries to prioritize official translations over fan translations. If the official translation is found, the fan translation isn't copied.
+Converts a JLN folder structure to a Kavita folder structure so that EPUBS can be indexed by Kavita, and adds the series name and
+volume number to the EPUB metadata to ensure it groups and sorts correctly.
 
 ## Usage
 
@@ -17,8 +17,14 @@ python .\jln2kavita.py "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light
 
 ## About
 
-This script converts the JLN folder structure to a Kavita folder structure. Only EPUB files are copied to the target directory. The series name added to the EPUB metadata
-is the name of the folder containing the EPUB folder. The series index is extracted from the EPUB filename using regex.
+- This script converts the JLN folder structure to a Kavita folder structure.
+- Only EPUB files are copied to the target directory.
+- The series name added to the EPUB metadata is the name of the folder containing the EPUB folder. The series index is extracted from the EPUB filename using regex.
+- Subfolders (with the exception of folders that contain "official") are ignored, so spinoffs might be missed. This is intentional, and won't be fixed.
+If all subfolders were included, both fan translations and official translations could be copied to the target directory.
+  - If you identify any spinoffs it missed, you can manually copy it to the series `Specials` folder in the target directory.
+- It tries to prioritize official translations over fan translations. If the official translation folder is found, the fan translation isn't copied.
+  - If you want the fan translations, you can manually copy them to the series folder in the target directory or create a separate series folder for it.
 
 JLN folder structure:
 
