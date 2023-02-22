@@ -124,6 +124,9 @@ def extract_series_part_number(filename: str) -> str | None:
 def extract_volume_part_number(filename: str) -> str | None:
     '''
     Extract the part number from the filename.
+
+    Note that this won't work for files with both series parts and volume parts
+    such as `Title Part 2 - Volume 1 Part 2`. It will (likely) return None.
     '''
 
     for pattern in PART_PATTERNS:
