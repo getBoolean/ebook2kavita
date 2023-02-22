@@ -2,7 +2,7 @@
 Script to convert a JLN epub directory structure to a Kavita directory structure.
 '''
 
-import os
+import os, time
 import sys
 import shutil
 import argparse
@@ -24,6 +24,27 @@ PART_PATTERNS: list = [
     re.compile(r'part[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
     re.compile(r'pt[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
 ]
+
+
+def is_locked(filepath):
+    """Checks if a file is locked by opening it in append mode.
+    If no exception thrown, then the file is not locked.
+    """
+    locked = None
+    file_object = None
+    if os.path.exists(filepath):
+        try:
+            buffer_size = 8
+            # Opening file in append mode and read the first 8 characters.
+            file_object = open(filepath, 'a', buffer_size, encoding='utf-8')
+            if file_object:
+                locked = False
+        except IOError:
+            locked = True
+        finally:
+            if file_object:
+                file_object.close()
+    return locked
 
 
 def find_part_folders(series_folder_path: str) -> list[str]:
@@ -164,13 +185,16 @@ def copy_epub_file(series_folder, epub_file_path, dest_epub_path):
     Copy an epub file from JLN directory to a Kavita directory.
     '''
     # Use calibre-meta to set the series and index
-    temp_epub_file = dest_epub_path + ".temp.epub"
-    shutil.copy(epub_file_path, temp_epub_file)
+    temp_epub_file = shutil.copy(epub_file_path, dest_epub_path + ".temp.epub")
     vol_num = extract_volume_number(os.path.basename(epub_file_path))
     part_num = extract_part_number(os.path.basename(epub_file_path))
-    set_epub_series_and_index(
-        temp_epub_file, series_folder, part_num, vol_num)
-    shutil.move(temp_epub_file, dest_epub_path)
+    while is_locked(temp_epub_file):
+        time.sleep(2)
+    set_epub_series_and_index(temp_epub_file, series_folder, part_num, vol_num)
+    shutil.copyfile(temp_epub_file, dest_epub_path)
+    while is_locked(temp_epub_file):
+        time.sleep(2)
+    os.remove(temp_epub_file)
 
 
 def copy_epub_files(src_dir, dest_dir):
