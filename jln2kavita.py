@@ -29,6 +29,8 @@ PART_PATTERNS: list = [
 def is_locked(filepath):
     """Checks if a file is locked by opening it in append mode.
     If no exception thrown, then the file is not locked.
+
+    Source: https://www.calazan.com/how-to-check-if-a-file-is-locked-in-python/
     """
     locked = None
     file_object = None
@@ -74,6 +76,8 @@ def set_epub_series_and_index(epub_file_path: str, series_title: str,
     if series_index is not None:
         command += ['--index', series_index]
 
+    while is_locked(epub_file_path):
+        time.sleep(2)
     # Run the command
     result = subprocess.run(command, capture_output=True, check=False)
 
@@ -188,8 +192,6 @@ def copy_epub_file(series_folder, epub_file_path, dest_epub_path):
     temp_epub_file = shutil.copy(epub_file_path, dest_epub_path + ".temp.epub")
     vol_num = extract_volume_number(os.path.basename(epub_file_path))
     part_num = extract_part_number(os.path.basename(epub_file_path))
-    while is_locked(temp_epub_file):
-        time.sleep(2)
     set_epub_series_and_index(temp_epub_file, series_folder, part_num, vol_num)
     shutil.copyfile(temp_epub_file, dest_epub_path)
     while is_locked(temp_epub_file):
