@@ -219,7 +219,7 @@ def find_series_epub_files(series_folder_path: str) -> list[str]:
             and f.lower().endswith('.epub')]
 
 
-def copy_epub_file(series_folder, epub_file_path, dest_epub_path):
+def copy_epub_file(series_folder_name, epub_file_path, dest_epub_path):
     '''
     Copy an epub file from JLN directory to a Kavita directory.
     '''
@@ -230,7 +230,7 @@ def copy_epub_file(series_folder, epub_file_path, dest_epub_path):
     series_part_num = extract_series_part_number(epub_filename)
     volume_part_num = extract_volume_part_number(epub_filename)
     set_epub_series_and_index(
-        temp_epub_file, series_folder,
+        temp_epub_file, series_folder_name,
         series_part_num, vol_num, volume_part_num)
     shutil.copyfile(temp_epub_file, dest_epub_path)
     while is_locked(temp_epub_file):
