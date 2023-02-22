@@ -13,7 +13,7 @@ python .\jln2kavita.py "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light
 ## Requirements
 
 - Python 3
-- Calibre
+- Calibre 6
 
 ## About
 
