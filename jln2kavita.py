@@ -2,7 +2,8 @@
 Script to convert a JLN epub directory structure to a Kavita directory structure.
 '''
 
-import os, time
+import os
+import time
 import sys
 import shutil
 import argparse
