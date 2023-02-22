@@ -83,8 +83,8 @@ def set_epub_series_and_index(epub_file_path: str,
             index += f'.{volume_part_num}'
         command += ['--index', index]
     else:
-        # Default volume number is 1 when applies the series title, so we still want to
-        # apply the part number to the series index
+        # Default volume number is 1 when applying the series title and the index is not specified,
+        # so we still want to apply the part number to the series index
         if volume_part_num:
             index = f'1.{volume_part_num}'
             command += ['--index', index]
