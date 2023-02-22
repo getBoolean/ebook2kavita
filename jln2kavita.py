@@ -63,19 +63,23 @@ def find_part_folders(series_folder_path: str) -> list[str]:
 
 
 def set_epub_series_and_index(epub_file_path: str, series_title: str,
-                              part_num: str | None, series_index: str | None) -> None:
+                              series_part_num: str | None, series_index: str | None,
+                              volume_part_num: str | None) -> None:
     '''
     Set the series and index of an epub file using calibre.
     '''
     # Construct the command
     title: str = series_title
-    if part_num:
-        title = f'{series_title} Part {part_num}'
+    if series_part_num:
+        title = f'{series_title} Part {series_part_num}'
 
     command = ['ebook-meta', epub_file_path, '--series', title]
 
     if series_index is not None:
-        command += ['--index', series_index]
+        index = series_index
+        if volume_part_num:
+            index += f'.{volume_part_num}'
+        command += ['--index', index]
 
     while is_locked(epub_file_path):
         time.sleep(2)
@@ -87,17 +91,51 @@ def set_epub_series_and_index(epub_file_path: str, series_title: str,
         print('Error:', result.stderr.decode('utf-8'))
 
 
-def extract_part_number(filename: str) -> str | None:
+def extract_series_part_number(filename: str) -> str | None:
     '''
     Extract the part number from the filename.
     '''
+
+    # Make sure that a match in PART_PATTERNS comes before a match in VOLUME_PATTERNS
+
     for pattern in PART_PATTERNS:
         match = pattern.search(filename)
         if match:
+            # Add check that pattern must come before VOLUME_PATTERNS
+            for volume_pattern in VOLUME_PATTERNS:
+                volume_match = volume_pattern.search(filename)
+                if volume_match and volume_match.start() < match.start():
+                    return None
+
             try:
                 return match.group(1)
             except IndexError:
                 return match.group(0)
+
+    return None
+
+
+def extract_volume_part_number(filename: str) -> str | None:
+    '''
+    Extract the part number from the filename.
+    '''
+
+    # Make sure that a match in PART_PATTERNS comes before a match in VOLUME_PATTERNS
+
+    for pattern in PART_PATTERNS:
+        match = pattern.search(filename)
+        if match:
+            # Add check that pattern must come before VOLUME_PATTERNS
+            for volume_pattern in VOLUME_PATTERNS:
+                volume_match = volume_pattern.search(filename)
+                if volume_match and volume_match.start() > match.start():
+                    return None
+
+            try:
+                return match.group(1)
+            except IndexError:
+                return match.group(0)
+
     return None
 
 
@@ -114,7 +152,7 @@ def extract_volume_number(filename: str) -> str | None:
             except IndexError:
                 return match.group(0)
 
-    if not extract_part_number(filename):
+    if not extract_series_part_number(filename):
         match = BACKUP_VOLUME_PATTERN.search(filename)
         if match:
             try:
@@ -191,9 +229,11 @@ def copy_epub_file(series_folder, epub_file_path, dest_epub_path):
     '''
     # Use calibre-meta to set the series and index
     temp_epub_file = shutil.copy(epub_file_path, dest_epub_path + ".temp.epub")
-    vol_num = extract_volume_number(os.path.basename(epub_file_path))
-    part_num = extract_part_number(os.path.basename(epub_file_path))
-    set_epub_series_and_index(temp_epub_file, series_folder, part_num, vol_num)
+    epub_filename = os.path.basename(epub_file_path)
+    vol_num = extract_volume_number(epub_filename)
+    series_part_num = extract_series_part_number(epub_filename)
+    volume_part_num = extract_volume_part_number(epub_filename)
+    set_epub_series_and_index(temp_epub_file, series_folder, series_part_num, vol_num, volume_part_num)
     shutil.copyfile(temp_epub_file, dest_epub_path)
     while is_locked(temp_epub_file):
         time.sleep(2)
