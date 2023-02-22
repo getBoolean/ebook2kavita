@@ -50,18 +50,6 @@ def is_locked(filepath):
     return locked
 
 
-def find_part_folders(series_folder_path: str) -> list[str]:
-    '''Find the part folders in the given folder
-    '''
-    part_folders = []
-    for series_sub_folder in os.listdir(series_folder_path):
-        series_sub_folder_path = os.path.join(
-            series_folder_path, series_sub_folder)
-        if os.path.isdir(series_sub_folder_path) and 'part' in series_sub_folder.lower():
-            part_folders.append(series_sub_folder_path)
-    return part_folders
-
-
 def set_epub_series_and_index(epub_file_path: str,
                               series_title: str,
                               series_part_num: str | None,
@@ -170,6 +158,37 @@ def extract_volume_number(filename: str) -> str | None:
     return None
 
 
+def copy_epub_file(series_folder_name, epub_file_path, dest_epub_path):
+    '''
+    Copy an epub file from JLN directory to a Kavita directory.
+    '''
+    # Use calibre-meta to set the series and index
+    temp_epub_file = shutil.copy(epub_file_path, dest_epub_path + ".temp.epub")
+    epub_filename = os.path.basename(epub_file_path)
+    vol_num = extract_volume_number(epub_filename)
+    series_part_num = extract_series_part_number(epub_filename)
+    volume_part_num = extract_volume_part_number(epub_filename)
+    set_epub_series_and_index(
+        temp_epub_file, series_folder_name,
+        series_part_num, vol_num, volume_part_num)
+    shutil.copyfile(temp_epub_file, dest_epub_path)
+    while is_locked(temp_epub_file):
+        time.sleep(2)
+    os.remove(temp_epub_file)
+
+
+def find_part_folders(series_folder_path: str) -> list[str]:
+    '''Find the part folders in the given folder
+    '''
+    part_folders = []
+    for series_sub_folder in os.listdir(series_folder_path):
+        series_sub_folder_path = os.path.join(
+            series_folder_path, series_sub_folder)
+        if os.path.isdir(series_sub_folder_path) and 'part' in series_sub_folder.lower():
+            part_folders.append(series_sub_folder_path)
+    return part_folders
+
+
 def find_series_epub_files(series_folder_path: str) -> list[str]:
     '''
     Find the epub files in the given series folder, with a preference for the official translations.
@@ -228,25 +247,6 @@ def find_series_epub_files(series_folder_path: str) -> list[str]:
             for f in os.listdir(epub_folder_path)
             if os.path.isfile(os.path.join(epub_folder_path, f))
             and f.lower().endswith('.epub')]
-
-
-def copy_epub_file(series_folder_name, epub_file_path, dest_epub_path):
-    '''
-    Copy an epub file from JLN directory to a Kavita directory.
-    '''
-    # Use calibre-meta to set the series and index
-    temp_epub_file = shutil.copy(epub_file_path, dest_epub_path + ".temp.epub")
-    epub_filename = os.path.basename(epub_file_path)
-    vol_num = extract_volume_number(epub_filename)
-    series_part_num = extract_series_part_number(epub_filename)
-    volume_part_num = extract_volume_part_number(epub_filename)
-    set_epub_series_and_index(
-        temp_epub_file, series_folder_name,
-        series_part_num, vol_num, volume_part_num)
-    shutil.copyfile(temp_epub_file, dest_epub_path)
-    while is_locked(temp_epub_file):
-        time.sleep(2)
-    os.remove(temp_epub_file)
 
 
 def copy_epub_files(src_dir, dest_dir):
