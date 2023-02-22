@@ -139,8 +139,7 @@ def find_series_epub_files(series_folder_path: str) -> list[str]:
             has_part_epub_folder = os.path.isdir(part_epub_folder_path)
             if has_part_epub_folder:
                 # find official subfolder from folder
-                official_folder = find_official_folder(
-                    part_epub_folder_path)
+                official_folder = find_official_folder(part_epub_folder_path)
                 if official_folder:
                     part_epub_folder_path = official_folder
                 epub_files += [os.path.join(part_epub_folder_path, f)
@@ -152,14 +151,12 @@ def find_series_epub_files(series_folder_path: str) -> list[str]:
                                for f in os.listdir(part_folder)
                                if os.path.isfile(os.path.join(part_folder, f))
                                and f.lower().endswith('.epub')]
+        return epub_files
 
-    else:
-        epub_files += [os.path.join(epub_folder_path, f)
-                       for f in os.listdir(epub_folder_path)
-                       if os.path.isfile(os.path.join(epub_folder_path, f))
-                       and f.lower().endswith('.epub')]
-
-    return epub_files
+    return [os.path.join(epub_folder_path, f)
+            for f in os.listdir(epub_folder_path)
+            if os.path.isfile(os.path.join(epub_folder_path, f))
+            and f.lower().endswith('.epub')]
 
 
 def copy_epub_file(series_folder, epub_file_path, dest_epub_path):
