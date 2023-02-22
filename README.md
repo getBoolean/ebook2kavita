@@ -3,6 +3,15 @@
 Converts a JLN folder structure to a Kavita folder structure so that EPUBS can be indexed by Kavita, and adds the series name and
 volume number to the EPUB metadata to ensure it groups and sorts correctly.
 
+Supported folder structures:
+
+- `/Series/Part */EPUB/*.epub`
+- `/Series/EPUB/*.epub`
+- `/Series/EPUB/Official/*.epub`
+- `/Series/Official/EPUB/*.epub`
+- `/Series/Official/*.epub`
+- `/Series/*.epub`
+
 ## Usage
 
 ```bash
