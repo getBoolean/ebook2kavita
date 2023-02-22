@@ -12,6 +12,11 @@ import subprocess
 from tqdm import tqdm
 
 
+# ************************************************************ #
+# ***************** START OF EPUB META UTILS ***************** #
+# ************************************************************ #
+
+
 VOLUME_PATTERNS: list = [
     re.compile(r'v[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
     re.compile(r'vol[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
@@ -156,6 +161,11 @@ def extract_volume_number(filename: str) -> str | None:
                 return match.group(0)
 
     return None
+
+
+# ************************************************************ #
+# ****************** END OF EPUB META UTILS ****************** #
+# ************************************************************ #
 
 
 def copy_epub_file(series_folder_name, epub_file_path, dest_epub_path):
