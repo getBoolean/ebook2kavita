@@ -63,7 +63,7 @@ def find_part_folders(series_folder_path: str) -> list[str]:
 
 
 def set_epub_series_and_index(epub_file_path: str, series_title: str,
-                              series_part_num: str | None, series_index: str | None,
+                              series_part_num: str | None, volume_num: str | None,
                               volume_part_num: str | None) -> None:
     '''
     Set the series and index of an epub file using calibre.
@@ -75,8 +75,8 @@ def set_epub_series_and_index(epub_file_path: str, series_title: str,
 
     command = ['ebook-meta', epub_file_path, '--series', title]
 
-    if series_index is not None:
-        index = series_index
+    if volume_num is not None:
+        index = volume_num
         if volume_part_num:
             index += f'.{volume_part_num}'
         command += ['--index', index]
