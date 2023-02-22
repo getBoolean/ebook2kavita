@@ -96,12 +96,10 @@ def extract_series_part_number(filename: str) -> str | None:
     Extract the part number from the filename.
     '''
 
-    # Make sure that a match in PART_PATTERNS comes before a match in VOLUME_PATTERNS
-
     for pattern in PART_PATTERNS:
         match = pattern.search(filename)
         if match:
-            # Add check that pattern must come before VOLUME_PATTERNS
+            # Check that series part pattern must come before VOLUME_PATTERNS
             for volume_pattern in VOLUME_PATTERNS:
                 volume_match = volume_pattern.search(filename)
                 if volume_match and volume_match.start() < match.start():
@@ -120,12 +118,10 @@ def extract_volume_part_number(filename: str) -> str | None:
     Extract the part number from the filename.
     '''
 
-    # Make sure that a match in PART_PATTERNS comes before a match in VOLUME_PATTERNS
-
     for pattern in PART_PATTERNS:
         match = pattern.search(filename)
         if match:
-            # Add check that pattern must come before VOLUME_PATTERNS
+            # Check that series part pattern must come after VOLUME_PATTERNS
             for volume_pattern in VOLUME_PATTERNS:
                 volume_match = volume_pattern.search(filename)
                 if volume_match and volume_match.start() > match.start():
