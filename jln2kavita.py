@@ -233,7 +233,9 @@ def copy_epub_file(series_folder, epub_file_path, dest_epub_path):
     vol_num = extract_volume_number(epub_filename)
     series_part_num = extract_series_part_number(epub_filename)
     volume_part_num = extract_volume_part_number(epub_filename)
-    set_epub_series_and_index(temp_epub_file, series_folder, series_part_num, vol_num, volume_part_num)
+    set_epub_series_and_index(
+        temp_epub_file, series_folder,
+        series_part_num, vol_num, volume_part_num)
     shutil.copyfile(temp_epub_file, dest_epub_path)
     while is_locked(temp_epub_file):
         time.sleep(2)
