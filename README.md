@@ -11,6 +11,7 @@ Supported folder structures:
 - `/Series/Official/EPUB/*.epub`
 - `/Series/Official/*.epub`
 - `/Series/*.epub`
+- `/Series/Light Novel/EPUB/*.epub`
 
 ## Usage
 

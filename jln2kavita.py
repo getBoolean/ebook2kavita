@@ -211,10 +211,12 @@ def find_series_epub_files(series_folder_path: str) -> list[str]:
     - `/Series/Official/EPUB/*.epub`
     - `/Series/Official/*.epub`
     - `/Series/*.epub`
+    - `/Series/Light Novel/EPUB/*.epub`
     '''
-    root_official_folder = find_official_folder(series_folder_path)
-    root_part_folders = find_part_folders(series_folder_path)
-    epub_folder_path = os.path.join(series_folder_path, 'EPUB')
+    root_lightnovel_folder = find_lightnovel_folder(series_folder_path)
+    root_official_folder = find_official_folder(root_lightnovel_folder)
+    root_part_folders = find_part_folders(root_lightnovel_folder)
+    epub_folder_path = os.path.join(root_lightnovel_folder, 'EPUB')
     has_root_epub_folder = os.path.isdir(epub_folder_path)
     if has_root_epub_folder:
         # find official subfolder from folder
@@ -230,7 +232,7 @@ def find_series_epub_files(series_folder_path: str) -> list[str]:
         else:
             epub_folder_path = root_official_folder
     else:
-        epub_folder_path = series_folder_path
+        epub_folder_path = root_lightnovel_folder
 
     if root_part_folders:
         epub_files = []
@@ -299,6 +301,17 @@ def copy_epub_files(src_dir, dest_dir):
             copy_epub_file(series_folder, epub_file_path, dest_epub_path)
 
 
+def find_lightnovel_folder(series_folder_path: str) -> str:
+    '''Find the light novel folder in the given folder, or `series_folder_path` if it is not found
+    '''
+    for series_sub_folder in os.listdir(series_folder_path):
+        series_sub_folder_path = os.path.join(
+            series_folder_path, series_sub_folder)
+        if os.path.isdir(series_sub_folder_path) and 'light novel' in series_sub_folder.lower():
+            return series_sub_folder_path
+    return series_folder_path
+
+
 def find_official_folder(epub_folder_path) -> str | None:
     '''Find the official folder in the given folder, or None if it does not exist
     '''
@@ -310,15 +323,21 @@ def find_official_folder(epub_folder_path) -> str | None:
     return None
 
 
-if __name__ == '__main__':
+def main():
+    '''Main entry point for the script.
+    '''
     parser = argparse.ArgumentParser(
-        description='Copy EPUB files from one directory to another')
+        description='Copy EPUB files from one directory to another', exit_on_error=False)
     parser.add_argument('src_dir', help='source directory')
     parser.add_argument('dest_dir', help='destination directory')
     args = parser.parse_args()
 
     try:
         copy_epub_files(args.src_dir, args.dest_dir)
-    except argparse.ArgumentTypeError as e:
-        print(str(e))
+    except argparse.ArgumentTypeError as error:
+        print(str(error))
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
