@@ -29,6 +29,7 @@ python .\jln2kavita.py "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light
 ## About
 
 - This script converts the JLN folder structure to a Kavita folder structure.
+- Adds the series name and volume number to the EPUB metadata to ensure it groups and sorts correctly.
 - Only EPUB files are copied to the target directory.
 - The series name added to the EPUB metadata is the name of the folder containing the EPUB folder. The series index is extracted from the EPUB filename using regex.
 - Subfolders (with the exception of folders that contain "official") are ignored, so spinoffs might be missed. This is intentional, and won't be fixed.
