@@ -10,6 +10,7 @@ import argparse
 import re
 import subprocess
 import hashlib
+import tempfile
 from pathlib import Path
 
 from tqdm import tqdm
@@ -204,7 +205,9 @@ def copy_epub_file(folder_index: int,
     '''
     # Use calibre-meta to set the series and index
     path = Path(dest_epub_path)
-    temp_epub_file_path = path.parent.joinpath(path.stem + '.epub.temp')
+    dirpath = Path(tempfile.mkdtemp())
+    # must end in .epub to be recognized by calibre's epub-meta
+    temp_epub_file_path = dirpath.joinpath(path.stem + '.temp.epub')
     temp_epub_file = shutil.copy(epub_file_path, os.fspath(temp_epub_file_path))
     epub_filename = os.path.basename(epub_file_path)
     vol_num = extract_volume_number(epub_filename)
@@ -213,7 +216,7 @@ def copy_epub_file(folder_index: int,
     series_name = series_folder_name
 
     if classification:
-        series_name = series_folder_name + f' - {convert_classification_to_plural(classification)}'
+        series_name = series_folder_name + f' {convert_classification_to_plural(classification)}'
 
     set_epub_series_and_index(
         temp_epub_file,
@@ -227,7 +230,7 @@ def copy_epub_file(folder_index: int,
     shutil.copyfile(temp_epub_file, dest_epub_path)
     while is_locked(temp_epub_file):
         time.sleep(2)
-    os.remove(temp_epub_file)
+    shutil.rmtree(dirpath)
 
 def is_side_story_folder(epub_file_path_relative: str) -> bool:
     '''
