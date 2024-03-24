@@ -299,6 +299,16 @@ def find_series_epub_files(series_folder_path: str) -> list[tuple[str, str | Non
         if has_epub_folder:
             epub_files += list_epub_files(official_epub_folder_path, series_folder_path)
 
+        digial_edition_folder = find_digital_edition_folder(root_official_folder)
+        if digial_edition_folder:
+            epub_files += list_epub_files(digial_edition_folder, series_folder_path)
+            official_epub_folder_path = os.path.join(
+                digial_edition_folder, 'EPUB')
+            has_epub_folder = os.path.isdir(official_epub_folder_path)
+            if has_epub_folder:
+                epub_files += list_epub_files(official_epub_folder_path, series_folder_path)
+
+
     if root_fan_folder:
         epub_files += list_epub_files(root_fan_folder, series_folder_path)
         fan_epub_folder_path = os.path.join(
@@ -464,6 +474,18 @@ def find_official_folder(epub_folder_path: str) -> str | None:
             epub_folder_path, epub_sub_folder)
         path_relative = os.path.relpath(epub_sub_folder, epub_folder_path)
         if os.path.isdir(epub_sub_folder_path) and 'official' in path_relative.lower():
+            return epub_sub_folder_path
+    return None
+
+
+def find_digital_edition_folder(epub_folder_path: str) -> str | None:
+    '''Find the digital edition folder in the given folder, or None if it does not exist
+    '''
+    for epub_sub_folder in os.listdir(epub_folder_path):
+        epub_sub_folder_path = os.path.join(
+            epub_folder_path, epub_sub_folder)
+        path_relative = os.path.relpath(epub_sub_folder, epub_folder_path)
+        if os.path.isdir(epub_sub_folder_path) and 'digital edition' in path_relative.lower():
             return epub_sub_folder_path
     return None
 
