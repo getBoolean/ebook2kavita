@@ -3,78 +3,8 @@
 Converts a JLN folder structure to a Kavita folder structure so that EPUBS can be indexed by Kavita, and adds the series name and
 volume number to the EPUB metadata to ensure it groups and sorts correctly.
 
-Supported folder structures:
-
-- `<Series>/` / `<Series>/Light Novel/`
-  - `*.epub`
-  - `Side Stor(y/ies)/` / `Short Stor(y/ies)`
-    - `*.epub`
-    - `EPUB/*.epub`
-  - `Official*/`
-    - `*.epub`
-    - `EPUB/`
-      - `*.epub`
-      - `Side Stor(y/ies)/*.epub`
-      - `Short Stor(y/ies)/*.epub`
-    - `Side Stor(y/ies)/*.epub`
-    - `Short Stor(y/ies)/*.epub`
-    - `Digital Edition*/`
-      - `*.epub`
-      - `EPUB/`
-        - `*.epub`
-        - `Side Stor(y/ies)/*.epub`
-        - `Short Stor(y/ies)/*.epub`
-      - `Side Stor(y/ies)/*.epub`
-      - `Short Stor(y/ies)/*.epub`
-  - `Fan*/`
-    - `*.epub`
-    - `EPUB/`
-      - `*.epub`
-      - `Side Stor(y/ies)/*.epub`
-      - `Short Stor(y/ies)/*.epub`
-    - `Side Stor(y/ies)/*.epub`
-    - `Short Stor(y/ies)/*.epub`
-  - `EPUB/`
-    - `*.epub`
-    - `Official*/`
-      - `*.epub`
-      - `Side Stor(y/ies)/*.epub`
-      - `Short Stor(y/ies)/*.epub`
-    - `Fan*/`
-      - `*.epub`
-      - `Side Stor(y/ies)/*.epub`
-      - `Short Stor(y/ies)/*.epub`
-    - `Side Stor(y/ies)/*.epub`
-    - `Short Stor(y/ies)/*.epub`
-  - `Part #/`
-    - `*.epub`
-    - `EPUB/`
-      - `*.epub`
-      - `Official*/`
-        - `*.epub`
-        - `Side Stor(y/ies)/*.epub`
-        - `Short Stor(y/ies)/*.epub`
-      - `Fan*/`
-        - `*.epub`
-        - `Side Stor(y/ies)/*.epub`
-        - `Short Stor(y/ies)/*.epub`
-      - `Side Stor(y/ies)/*.epub`
-      - `Short Stor(y/ies)/*.epub`
-    - `Official*/`
-      - `*.epub`
-      - `EPUB/*.epub`
-      - `Side Stor(y/ies)/` `Short Stor(y/ies)`
-        - `*.epub`
-        - `EPUB/*.epub`
-    - `Fan*/`
-      - `*.epub`
-      - `EPUB/*.epub`
-      - `Side Stor(y/ies)/` `Short Stor(y/ies)`
-        - `*.epub`
-        - `EPUB/*.epub`
-    - `Side Stor(y/ies)/` `Short Stor(y/ies)`
-      - `*.epub`
-      - `EPUB/*.epub`
+All `.epub` files are copied to the target directory and split into multiple series for based on year/part, short stories, web/light novel,
+and fan/official translation.
 
 ## Usage
 
