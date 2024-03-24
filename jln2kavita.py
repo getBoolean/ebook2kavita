@@ -80,6 +80,11 @@ def set_epub_series_and_index(epub_file_path: str,
     if series_part_num:
         title = f'{series_title} Part {series_part_num}'
 
+    if not shutil.which('ebook-meta'):
+        print('Error: Calibre\'s ebook-meta not found in the path. \
+              Please install Calibre and add the installation directory to the PATH.', file=sys.stderr)
+        sys.exit(1)
+
     command = ['ebook-meta', epub_file_path, '--series', title]
 
     if volume_num is not None:
@@ -98,7 +103,7 @@ def set_epub_series_and_index(epub_file_path: str,
 
     # Check the output for errors
     if result.returncode != 0:
-        print('Error:', result.stderr.decode('utf-8'))
+        print('Error:', result.stderr.decode('utf-8'), file=sys.stderr)
 
 
 def extract_series_part_number(filename: str) -> str | None:
@@ -472,7 +477,7 @@ def main() -> None:
     try:
         copy_epub_files(args.src_dir, args.dest_dir)
     except argparse.ArgumentTypeError as error:
-        print(str(error))
+        print(str(error), file=sys.stderr)
         sys.exit(1)
 
 
