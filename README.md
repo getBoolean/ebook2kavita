@@ -22,7 +22,7 @@ python .\jln2kavita.py "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light
 
 ## Requirements
 
-- Python 3
+- Python 3.11+
 - Calibre 6
 - [tqdm](https://pypi.org/project/tqdm/) (`pip install tqdm`)
 
