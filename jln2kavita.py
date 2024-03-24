@@ -274,11 +274,14 @@ def list_epub_files(series_folder_path: str) -> list[tuple[str, str | None]]:
     '''
     List all epub files in the given folder, with a classification based on the folder name.
     '''
-    return [(os.path.join(dirpath, f), classify_epub_file_type(dirpath))
-            for dirpath, dirnames, filenames in os.walk(series_folder_path)
-                for f in filenames
-                    if os.path.isfile(os.path.join(dirpath, f)) and f.lower().endswith('.epub')
-            ]
+    return [
+        (os.path.join(dirpath, f),
+            classify_epub_file_type(os.path.relpath(dirpath, series_folder_path))
+        )
+        for dirpath, dirnames, filenames in os.walk(series_folder_path)
+            for f in filenames
+                if os.path.isfile(os.path.join(dirpath, f)) and f.lower().endswith('.epub')
+    ]
 
 def classify_epub_file_type(epub_folder_path_relative: str) -> str | None:
     '''
