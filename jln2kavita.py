@@ -215,7 +215,8 @@ def extract_volume_number(filename: str) -> str | None:
 # ************************************************************ #
 
 
-def copy_epub_file(folder_index: int,
+def copy_epub_file(pbar: tqdm,
+                   folder_index: int,
                    classification: str | None,
                    series_folder_name: str,
                    epub_file_path: str,
@@ -228,7 +229,9 @@ def copy_epub_file(folder_index: int,
     dirpath = Path(tempfile.mkdtemp())
     # must end in .epub to be recognized by calibre's epub-meta
     temp_epub_file_path = dirpath.joinpath(path.stem + '.temp.epub')
-    temp_epub_file = shutil.copy(epub_file_path, os.fspath(temp_epub_file_path))
+    temp_fixed_epub_file_path = dirpath.joinpath(path.stem + '.temp_fixed.epub')
+    pbar.set_postfix(refresh=True, current='copying')
+    temp_epub_file = shutil.copyfile(epub_file_path, os.fspath(temp_epub_file_path))
     epub_filename = os.path.basename(epub_file_path)
     vol_num = extract_volume_number(epub_filename)
     series_part_num = extract_series_part_number(epub_filename)
@@ -238,6 +241,7 @@ def copy_epub_file(folder_index: int,
     if classification:
         series_name = series_folder_name + f' {convert_classification_to_plural(classification)}'
 
+    pbar.set_postfix(refresh=True, calibre='metadata')
     set_epub_series_and_index(
         temp_epub_file,
         series_name,
@@ -247,9 +251,14 @@ def copy_epub_file(folder_index: int,
         folder_index
     )
 
-    fix_epub(temp_epub_file, dest_epub_path)
-    while is_locked(temp_epub_file):
-        time.sleep(2)
+    pbar.set_postfix(refresh=True, calibre='fixing')
+    fix_epub(temp_epub_file, os.fspath(temp_fixed_epub_file_path))
+    pbar.set_postfix(refresh=True, current='copying')
+    shutil.copyfile(temp_fixed_epub_file_path, dest_epub_path)
+    while is_locked(temp_epub_file) or is_locked(os.fspath(temp_fixed_epub_file_path)):
+        time.sleep(0.5)
+        pbar.set_postfix(refresh=True, current='waiting')
+    pbar.set_postfix(refresh=True)
     shutil.rmtree(dirpath)
 
 def is_side_story_folder(epub_file_path_relative: str) -> bool:
@@ -407,14 +416,9 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
                     pbar.update(1)
                     continue
 
-                with open(dest_epub_path, 'rb') as df, open(epub_file_path, 'rb') as f:
-                    epub_file_hash = hashlib.file_digest(f, hashlib.sha256)
-                    dest_epub_hash = hashlib.file_digest(df, hashlib.sha256)
-                    if epub_file_hash == dest_epub_hash:
-                        pbar.update(1)
-                        continue
+            copy_epub_file(pbar, index, classification, series_folder,
+                           epub_file_path, dest_epub_path)
 
-            copy_epub_file(index, classification, series_folder, epub_file_path, dest_epub_path)
         pbar.close()
 
 
