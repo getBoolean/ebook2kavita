@@ -236,6 +236,7 @@ def is_side_story_folder(epub_file_path_relative: str) -> bool:
     folder_names = [
         "side story",
         "side stories",
+        "spin-off series",
     ]
     return any(folder_name in epub_file_path_relative.lower() for folder_name in folder_names)
 
