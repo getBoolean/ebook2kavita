@@ -9,6 +9,7 @@ import shutil
 import argparse
 import re
 import subprocess
+import hashlib
 from pathlib import Path
 
 from tqdm import tqdm
@@ -473,10 +474,15 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
             dest_epub_path = os.path.join(
                 dest_series_folder, filename)
             if os.path.exists(dest_epub_path):
-                pbar.update(1)
-                continue
+                with open(dest_epub_path, 'rb') as df, open(dest_epub_path, 'rb') as f:
+                    epub_file_hash = hashlib.sha512(f.read()).digest()
+                    dest_epub_hash = hashlib.sha512(df.read()).digest()
+                    if epub_file_hash == dest_epub_hash:
+                        pbar.update(1)
+                        continue
 
             copy_epub_file(index, classification, series_folder, epub_file_path, dest_epub_path)
+            pbar.update(1)
 
 
 def find_lightnovel_folder(series_folder_path: str) -> str:
