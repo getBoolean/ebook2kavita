@@ -329,9 +329,7 @@ def convert_classification_to_plural(classification: str) -> str:
     '''
     Convert a classification to a plural form.
     '''
-    if classification.endswith(" Translation"):
-        return classification.replace(" Translation", " Translations")
-    elif classification.endswith(" Story"):
+    if classification.endswith(" Story"):
         return classification.replace(" Story", " Stories")
     else:
         return classification
