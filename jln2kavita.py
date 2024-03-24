@@ -378,6 +378,7 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
                 dest_mtime = os.path.getmtime(dest_epub_path)
                 src_mtime = os.path.getmtime(epub_file_path)
                 if dest_mtime > src_mtime:
+                    pbar.update(1)
                     continue
 
                 with open(dest_epub_path, 'rb') as df, open(epub_file_path, 'rb') as f:
