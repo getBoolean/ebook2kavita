@@ -211,7 +211,7 @@ def copy_epub_file(folder_index: int,
     series_name = series_folder_name
 
     if classification:
-        series_name = series_folder_name + f' - {classification}'
+        series_name = series_folder_name + f' - {convert_classification_to_plural(classification)}'
 
     set_epub_series_and_index(
         temp_epub_file,
@@ -408,6 +408,21 @@ def classify_epub_file_type(epub_folder_path_relative: str) -> str | None:
         return "Official Translation"
     else:
         return None
+
+def convert_classification_to_plural(classification: str) -> str:
+    '''
+    Convert a classification to a plural form.
+    '''
+    if classification == "Side Story":
+        return "Side Stories"
+    elif classification == "Short Story":
+        return "Short Stories"
+    elif classification == "Fan Translation":
+        return "Fan Translations"
+    elif classification == "Official Translation":
+        return "Official Translations"
+    else:
+        return classification
 
 def copy_epub_files(src_dir: str, dest_dir: str) -> None:
     '''
