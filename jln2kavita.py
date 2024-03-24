@@ -82,7 +82,8 @@ def set_epub_series_and_index(epub_file_path: str,
 
     if not shutil.which('ebook-meta'):
         print('Error: Calibre\'s ebook-meta not found in the path. \
-              Please install Calibre and add the installation directory to the PATH.', file=sys.stderr)
+              Please install Calibre and add the installation directory to the PATH.',
+              file=sys.stderr)
         sys.exit(1)
 
     command = ['ebook-meta', epub_file_path, '--series', title]
