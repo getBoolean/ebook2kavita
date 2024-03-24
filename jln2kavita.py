@@ -204,7 +204,7 @@ def copy_epub_file(folder_index: int,
     '''
     # Use calibre-meta to set the series and index
     path = Path(dest_epub_path)
-    temp_epub_file_path = path.parent.joinpath(path.stem + '.temp.epub')
+    temp_epub_file_path = path.parent.joinpath(path.stem + '.epub.temp')
     temp_epub_file = shutil.copy(epub_file_path, os.fspath(temp_epub_file_path))
     epub_filename = os.path.basename(epub_file_path)
     vol_num = extract_volume_number(epub_filename)
