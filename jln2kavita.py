@@ -32,6 +32,7 @@ BACKUP_VOLUME_PATTERN = re.compile(r'\b\d+(?:\.\d+)?\b')
 PART_PATTERNS: list = [
     re.compile(r'part[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
     re.compile(r'pt[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
+    re.compile(r'year[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
 ]
 
 SIDESTORY_PATTERNS: list = [
