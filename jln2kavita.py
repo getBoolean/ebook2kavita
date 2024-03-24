@@ -390,6 +390,7 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
 
             copy_epub_file(index, classification, series_folder, epub_file_path, dest_epub_path)
             pbar.update(1)
+        pbar.close()
 
 
 def find_lightnovel_folder(series_folder_path: str) -> str:
