@@ -9,6 +9,8 @@ import shutil
 import argparse
 import re
 import subprocess
+from pathlib import Path
+
 from tqdm import tqdm
 
 
@@ -65,7 +67,8 @@ def set_epub_series_and_index(epub_file_path: str,
                               series_title: str,
                               series_part_num: str | None,
                               volume_num: str | None,
-                              volume_part_num: str | None) -> None:
+                              volume_part_num: str | None,
+                              folder_index: int) -> None:
     '''
     Set the series and index of an epub file using calibre.
     '''
@@ -79,14 +82,11 @@ def set_epub_series_and_index(epub_file_path: str,
     if volume_num is not None:
         index = volume_num
         if volume_part_num:
-            index += f'.{volume_part_num}'
+            index += f'{volume_num}.{volume_part_num}'
         command += ['--index', index]
     else:
-        # Default volume number is 1 when applying the series title and the index is not specified,
-        # so we still want to apply the part number to the series index
-        if volume_part_num:
-            index = f'1.{volume_part_num}'
-            command += ['--index', index]
+        index = f'1.{folder_index}'
+        command += ['--index', index]
 
     while is_locked(epub_file_path):
         time.sleep(2)
@@ -111,7 +111,7 @@ def extract_series_part_number(filename: str) -> str | None:
                 volume_match = volume_pattern.search(filename)
                 if volume_match and volume_match.start() < match.start():
                     return None
-            
+
             for volume_pattern in SIDESTORY_PATTERNS:
                 volume_match = volume_pattern.search(filename)
                 if volume_match and volume_match.start() < match.start():
@@ -141,7 +141,7 @@ def extract_volume_part_number(filename: str) -> str | None:
                 volume_match = volume_pattern.search(filename)
                 if volume_match and volume_match.start() > match.start():
                     return None
-            
+
             for volume_pattern in SIDESTORY_PATTERNS:
                 volume_match = volume_pattern.search(filename)
                 if volume_match and volume_match.start() > match.start():
@@ -192,37 +192,34 @@ def extract_volume_number(filename: str) -> str | None:
 # ************************************************************ #
 
 
-def copy_epub_file(index: int, series_folder_path: str, series_folder_name: str, epub_file_path: str, dest_epub_path: str) -> None:
+def copy_epub_file(folder_index: int,
+                   classification: str | None,
+                   series_folder_name: str,
+                   epub_file_path: str,
+                   dest_epub_path: str) -> None:
     '''
     Copy an epub file from JLN directory to a Kavita directory.
     '''
     # Use calibre-meta to set the series and index
-    temp_epub_file = shutil.copy(epub_file_path, dest_epub_path + ".temp.epub")
+    path = Path(dest_epub_path)
+    temp_epub_file_path = path.parent.joinpath(path.stem + '.temp.epub')
+    temp_epub_file = shutil.copy(epub_file_path, os.fspath(temp_epub_file_path))
     epub_filename = os.path.basename(epub_file_path)
     vol_num = extract_volume_number(epub_filename)
     series_part_num = extract_series_part_number(epub_filename)
     volume_part_num = extract_volume_part_number(epub_filename)
     series_name = series_folder_name
 
-    epub_file_path_relative = os.path.relpath(epub_file_path, series_folder_path)
-    is_side_story = is_side_story_folder(epub_file_path_relative)
-    if is_side_story:
-        series_name = series_folder_name + " - Side Stories"
-
-    is_short_story = is_short_story_folder(epub_file_path_relative)
-    if is_short_story:
-        series_name = series_folder_name + " - Short Stories"
-    
-    if vol_num is None:
-        vol_num = f'{index}'
-    
+    if classification:
+        series_name = series_folder_name + f' - {classification}'
 
     set_epub_series_and_index(
         temp_epub_file,
         series_name,
         series_part_num,
         vol_num,
-        volume_part_num
+        volume_part_num,
+        folder_index
     )
 
     shutil.copyfile(temp_epub_file, dest_epub_path)
@@ -231,6 +228,9 @@ def copy_epub_file(index: int, series_folder_path: str, series_folder_name: str,
     os.remove(temp_epub_file)
 
 def is_side_story_folder(epub_file_path_relative: str) -> bool:
+    '''
+    Check if the given path is a side story folder.
+    '''
     folder_names = [
         "side story",
         "side stories",
@@ -238,6 +238,9 @@ def is_side_story_folder(epub_file_path_relative: str) -> bool:
     return any(folder_name in epub_file_path_relative.lower() for folder_name in folder_names)
 
 def is_short_story_folder(epub_file_path_relative: str) -> bool:
+    '''
+    Check if the given path is a short story folder.
+    '''
     folder_names = [
         "short story",
         "short stories",
@@ -257,85 +260,144 @@ def find_part_folders(series_folder_path: str) -> list[str]:
     return part_folders
 
 
-def find_series_epub_files(series_folder_path: str) -> list[str]:
+def find_series_epub_files(series_folder_path: str) -> list[tuple[str, str | None]]:
     '''
     Find the epub files in the given series folder, with a preference for the official translations.
 
     Possible paths:
 
-    - `/Series/Part */EPUB/*.epub`
-    - `/Series/EPUB/*.epub`
-    - `/Series/EPUB/Official/*.epub`
-    - `/Series/Official/EPUB/*.epub`
-    - `/Series/Official/*.epub`
-    - `/Series/*.epub`
-    - `/Series/Light Novel/EPUB/*.epub`
-    - `/Series/Side Story/EPUB/*.epub`
-    - `/Series/EPUB/Side Story/*.epub`
-    - `/Series/Part */EPUB/Side Story/*.epub`
-    - `/Series/Side Stories/EPUB/*.epub`
-    - `/Series/EPUB/Side Stories/*.epub`
-    - `/Series/Part */EPUB/Side Stories/*.epub`
+    - `Part */EPUB/*.epub`
+    - `Part */EPUB/Side Story/*.epub`
+    - `Part */EPUB/Side Stories/*.epub`
+    - `EPUB/*.epub`
+    - `EPUB/Official/*.epub`
+    - `Official*/EPUB/*.epub`
+    - `Official*/*.epub`
+    - `Fan*/EPUB/*.epub`
+    - `Fan*/*.epub`
+    - `*.epub`
+    - `Light Novel/EPUB/*.epub`
+    - `Side Story/EPUB/*.epub`
+    - `EPUB/Side Story/*.epub`
+    - `Side Stories/EPUB/*.epub`
+    - `EPUB/Side Stories/*.epub`
     '''
     root_lightnovel_folder = find_lightnovel_folder(series_folder_path)
 
     root_official_folder = find_official_folder(root_lightnovel_folder)
-    root_sidestory_folder = find_sidestory_folder(root_lightnovel_folder)
+    root_fan_folder = find_fan_folder(root_lightnovel_folder)
     root_part_folders = find_part_folders(root_lightnovel_folder)
-    epub_folder_path = os.path.join(root_lightnovel_folder, 'EPUB')
-    has_root_epub_folder = os.path.isdir(epub_folder_path)
+    root_epub_folder_path = os.path.join(root_lightnovel_folder, 'EPUB')
+    has_root_epub_folder = os.path.isdir(root_epub_folder_path)
+    epub_files: list[tuple[str, str | None]] = []
+    epub_files += list_epub_files(root_lightnovel_folder, series_folder_path)
     if root_official_folder:
+        epub_files += list_epub_files(root_official_folder, series_folder_path)
         official_epub_folder_path = os.path.join(
             root_official_folder, 'EPUB')
         has_epub_folder = os.path.isdir(official_epub_folder_path)
         if has_epub_folder:
-            epub_folder_path = official_epub_folder_path
-        else:
-            epub_folder_path = root_official_folder
-    elif has_root_epub_folder:
-        # find official subfolder from folder
-        official_folder = find_official_folder(epub_folder_path)
-        if official_folder:
-            epub_folder_path = official_folder
-    else:
-        epub_folder_path = root_lightnovel_folder
-    sub_sidestory_folder = find_sidestory_folder(epub_folder_path)
+            epub_files += list_epub_files(official_epub_folder_path, series_folder_path)
 
-    epub_files = []
+    if root_fan_folder:
+        epub_files += list_epub_files(root_fan_folder, series_folder_path)
+        fan_epub_folder_path = os.path.join(
+            root_fan_folder, 'EPUB')
+        has_epub_folder = os.path.isdir(fan_epub_folder_path)
+        if has_epub_folder:
+            epub_files += list_epub_files(fan_epub_folder_path, series_folder_path)
+
+    if has_root_epub_folder:
+        epub_files += list_epub_files(root_epub_folder_path, series_folder_path)
+        sub_official_folder = find_official_folder(root_epub_folder_path)
+        if sub_official_folder:
+            epub_files += list_epub_files(sub_official_folder, series_folder_path)
+            sub_sidestory_folder = find_sidestory_folder(sub_official_folder)
+            if sub_sidestory_folder:
+                epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+
+        sub_fan_folder = find_fan_folder(root_epub_folder_path)
+        if sub_fan_folder:
+            epub_files += list_epub_files(sub_fan_folder, series_folder_path)
+            sub_sidestory_folder = find_sidestory_folder(sub_fan_folder)
+            if sub_sidestory_folder:
+                epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+
+        sub_sidestory_folder = find_sidestory_folder(root_epub_folder_path)
+        if sub_sidestory_folder:
+            epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+
+    root_sidestory_folder = find_sidestory_folder(root_lightnovel_folder)
     if root_sidestory_folder:
-        epub_files += list_epub_files(root_sidestory_folder)
+        epub_files += list_epub_files(root_sidestory_folder, series_folder_path)
 
     if root_part_folders:
         for part_folder in root_part_folders:
-            part_epub_folder_path = os.path.join(part_folder, 'EPUB')
-            has_part_epub_folder = os.path.isdir(part_epub_folder_path)
-            if has_part_epub_folder:
+            sub_epub_folder_path = os.path.join(part_folder, 'EPUB')
+            has_sub_epub_folder = os.path.isdir(sub_epub_folder_path)
+            if has_sub_epub_folder:
                 # find official subfolder from folder
-                official_folder = find_official_folder(part_epub_folder_path)
-                sidestory_folder = find_sidestory_folder(part_epub_folder_path)
-                if official_folder:
-                    part_epub_folder_path = official_folder
-                epub_files += list_epub_files(part_epub_folder_path)
+                sub_official_folder = find_official_folder(sub_epub_folder_path)
+                sub_fan_folder = find_fan_folder(sub_epub_folder_path)
+                epub_files += list_epub_files(sub_epub_folder_path, series_folder_path)
+                if sub_official_folder:
+                    epub_files += list_epub_files(sub_official_folder, series_folder_path)
+                    sub_sidestory_folder = find_sidestory_folder(sub_official_folder)
+                    if sub_sidestory_folder:
+                        epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+                if sub_fan_folder:
+                    epub_files += list_epub_files(sub_fan_folder, series_folder_path)
+                    sub_sidestory_folder = find_sidestory_folder(sub_fan_folder)
+                    if sub_sidestory_folder:
+                        epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+                sidestory_folder = find_sidestory_folder(sub_epub_folder_path)
                 if sidestory_folder:
-                    epub_files += list_epub_files(sidestory_folder)
+                    epub_files += list_epub_files(sidestory_folder, series_folder_path)
             else:
+                sub_official_folder = find_official_folder(part_folder)
+                sub_fan_folder = find_fan_folder(part_folder)
+                epub_files += list_epub_files(part_folder, series_folder_path)
+                if sub_official_folder:
+                    epub_files += list_epub_files(sub_official_folder, series_folder_path)
+                    sub_sidestory_folder = find_sidestory_folder(sub_official_folder)
+                    if sub_sidestory_folder:
+                        epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+                if sub_fan_folder:
+                    epub_files += list_epub_files(sub_fan_folder, series_folder_path)
+                    sub_sidestory_folder = find_sidestory_folder(sub_fan_folder)
+                    if sub_sidestory_folder:
+                        epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
                 sidestory_folder = find_sidestory_folder(part_folder)
-                epub_files += list_epub_files(part_folder)
                 if sidestory_folder:
-                    epub_files += list_epub_files(sidestory_folder)
-        return epub_files
-    
-    epub_files += list_epub_files(epub_folder_path)
-    if sub_sidestory_folder:
-        epub_files += list_epub_files(sub_sidestory_folder)
+                    epub_files += list_epub_files(sidestory_folder, series_folder_path)
 
     return epub_files
 
-def list_epub_files(epub_folder_path) -> list[str]:
-    return [os.path.join(epub_folder_path, f)
+def list_epub_files(epub_folder_path: str, series_folder_path: str) -> list[tuple[str, str | None]]:
+    '''
+    List all epub files in the given folder, with a classification based on the folder name.
+    '''
+    epub_folder_path_relative = os.path.relpath(epub_folder_path, series_folder_path)
+    classification = classify_epub_file_type(epub_folder_path_relative)
+    return [(os.path.join(epub_folder_path, f), classification)
             for f in os.listdir(epub_folder_path)
             if os.path.isfile(os.path.join(epub_folder_path, f))
             and f.lower().endswith('.epub')]
+
+def classify_epub_file_type(epub_folder_path_relative: str) -> str | None:
+    '''
+    Classify the type of epub file based on its filename.
+    '''
+    if is_side_story_folder(epub_folder_path_relative):
+        return "Side Story"
+    elif is_short_story_folder(epub_folder_path_relative):
+        return "Short Story"
+    elif "fan" in epub_folder_path_relative.lower():
+        return "Fan Translation"
+    elif "official" in epub_folder_path_relative.lower():
+        return "Official Translation"
+    else:
+        return None
 
 def copy_epub_files(src_dir: str, dest_dir: str) -> None:
     '''
@@ -367,14 +429,19 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
 
         print(f'{series_folder}:')
         pbar = tqdm(epub_file_paths)
-        for index, epub_file_path in enumerate(pbar):
+        for index, (epub_file_path, classification) in enumerate(pbar):
+            path = Path(epub_file_path)
+            filename = path.stem
+            if classification:
+                filename += f' - {classification}'
+            filename += path.suffix
             dest_epub_path = os.path.join(
-                dest_series_folder, os.path.basename(epub_file_path))
+                dest_series_folder, filename)
             if os.path.exists(dest_epub_path):
                 pbar.update(1)
                 continue
 
-            copy_epub_file(index, series_folder_path, series_folder, epub_file_path, dest_epub_path)
+            copy_epub_file(index, classification, series_folder, epub_file_path, dest_epub_path)
 
 
 def find_lightnovel_folder(series_folder_path: str) -> str:
@@ -383,29 +450,45 @@ def find_lightnovel_folder(series_folder_path: str) -> str:
     for series_sub_folder in os.listdir(series_folder_path):
         series_sub_folder_path = os.path.join(
             series_folder_path, series_sub_folder)
-        if os.path.isdir(series_sub_folder_path) and 'light novel' in series_sub_folder.lower():
+        path_relative = os.path.relpath(series_sub_folder, series_folder_path)
+        if os.path.isdir(series_sub_folder_path) and 'light novel' in path_relative.lower():
             return series_sub_folder_path
     return series_folder_path
 
 
-def find_official_folder(epub_folder_path) -> str | None:
+def find_official_folder(epub_folder_path: str) -> str | None:
     '''Find the official folder in the given folder, or None if it does not exist
     '''
     for epub_sub_folder in os.listdir(epub_folder_path):
         epub_sub_folder_path = os.path.join(
             epub_folder_path, epub_sub_folder)
-        if os.path.isdir(epub_sub_folder_path) and 'official' in epub_sub_folder.lower():
+        path_relative = os.path.relpath(epub_sub_folder, epub_folder_path)
+        if os.path.isdir(epub_sub_folder_path) and 'official' in path_relative.lower():
             return epub_sub_folder_path
     return None
 
 
-def find_sidestory_folder(epub_folder_path) -> str | None:
+def find_fan_folder(epub_folder_path: str) -> str | None:
+    '''Find the fan folder in the given folder, or None if it does not exist
+    '''
+    for epub_sub_folder in os.listdir(epub_folder_path):
+        epub_sub_folder_path = os.path.join(
+            epub_folder_path, epub_sub_folder)
+        path_relative = os.path.relpath(epub_sub_folder, epub_folder_path)
+        if os.path.isdir(epub_sub_folder_path) and 'fan' in path_relative.lower():
+            return epub_sub_folder_path
+    return None
+
+
+def find_sidestory_folder(epub_folder_path: str) -> str | None:
     '''Find the side story folder in the given folder, or None if it does not exist
     '''
     for epub_sub_folder in os.listdir(epub_folder_path):
         epub_sub_folder_path = os.path.join(
             epub_folder_path, epub_sub_folder)
-        if os.path.isdir(epub_sub_folder_path) and (is_side_story_folder(epub_sub_folder) or is_short_story_folder(epub_sub_folder)):
+        path_relative = os.path.relpath(epub_sub_folder, epub_folder_path)
+        is_side_story = is_side_story_folder(path_relative) or is_short_story_folder(path_relative)
+        if os.path.isdir(epub_sub_folder_path) and is_side_story:
             return epub_sub_folder_path
     return None
 
