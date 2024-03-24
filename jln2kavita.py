@@ -400,7 +400,6 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
                         continue
 
             copy_epub_file(index, classification, series_folder, epub_file_path, dest_epub_path)
-            pbar.update(1)
         pbar.close()
 
 
