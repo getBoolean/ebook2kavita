@@ -73,7 +73,7 @@ def fix_epub(epub_file_path: str, dest_epub_path: str) -> None:
     # Use calibre-meta to set the series and index
     command = ['ebook-convert', epub_file_path, dest_epub_path]
     while is_locked(epub_file_path):
-        time.sleep(2)
+        time.sleep(0.5)
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
 
     if result.returncode != 0:
