@@ -475,8 +475,8 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
                 dest_series_folder, filename)
             if os.path.exists(dest_epub_path):
                 with open(dest_epub_path, 'rb') as df, open(dest_epub_path, 'rb') as f:
-                    epub_file_hash = hashlib.sha512(f.read()).digest()
-                    dest_epub_hash = hashlib.sha512(df.read()).digest()
+                    epub_file_hash = hashlib.file_digest(f, hashlib.sha512)
+                    dest_epub_hash = hashlib.file_digest(df, hashlib.sha512)
                     if epub_file_hash == dest_epub_hash:
                         pbar.update(1)
                         continue
