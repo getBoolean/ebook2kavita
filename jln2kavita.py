@@ -287,6 +287,8 @@ def classify_epub_file_type(epub_folder_path_relative: str) -> str | None:
     is_short_story = is_short_story_folder(epub_folder_path_relative)
     is_fan = "fan" in epub_folder_path_relative.lower()
     is_official = "official" in epub_folder_path_relative.lower()
+    is_webnovel = "web novel" in epub_folder_path_relative.lower()
+    is_lightnovel = "light novel" in epub_folder_path_relative.lower()
 
     translation_type = None
     if is_fan:
@@ -300,12 +302,26 @@ def classify_epub_file_type(epub_folder_path_relative: str) -> str | None:
     elif is_short_story:
         special_type = "Short Story"
 
-    if translation_type and special_type:
+    book_type = None
+    if is_webnovel:
+        book_type = "Web Novel"
+    elif is_lightnovel:
+        book_type = "Light Novel"
+
+    if translation_type and special_type and book_type:
+        return f"{book_type} {special_type} {translation_type}"
+    elif translation_type and special_type:
         return f"{special_type} {translation_type}"
+    elif book_type and special_type:
+        return f"{book_type} {special_type}"
+    elif translation_type and book_type:
+        return f"{book_type} {translation_type}"
     elif translation_type:
         return translation_type
     elif special_type:
         return special_type
+    elif book_type:
+        return book_type
 
 
 def convert_classification_to_plural(classification: str) -> str:
