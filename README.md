@@ -5,13 +5,76 @@ volume number to the EPUB metadata to ensure it groups and sorts correctly.
 
 Supported folder structures:
 
-- `/Series/Part */EPUB/*.epub`
-- `/Series/EPUB/*.epub`
-- `/Series/EPUB/Official/*.epub`
-- `/Series/Official/EPUB/*.epub`
-- `/Series/Official/*.epub`
-- `/Series/*.epub`
-- `/Series/Light Novel/EPUB/*.epub`
+- `<Series>/` / `<Series>/Light Novel/`
+  - `*.epub`
+  - `Side Stor(y/ies)/` / `Short Stor(y/ies)`
+    - `*.epub`
+    - `EPUB/*.epub`
+  - `Official*/`
+    - `*.epub`
+    - `EPUB/`
+      - `*.epub`
+      - `Side Stor(y/ies)/*.epub`
+      - `Short Stor(y/ies)/*.epub`
+    - `Side Stor(y/ies)/*.epub`
+    - `Short Stor(y/ies)/*.epub`
+    - `Digital Edition*/`
+      - `*.epub`
+      - `EPUB/`
+        - `*.epub`
+        - `Side Stor(y/ies)/*.epub`
+        - `Short Stor(y/ies)/*.epub`
+      - `Side Stor(y/ies)/*.epub`
+      - `Short Stor(y/ies)/*.epub`
+  - `Fan*/`
+    - `*.epub`
+    - `EPUB/`
+      - `*.epub`
+      - `Side Stor(y/ies)/*.epub`
+      - `Short Stor(y/ies)/*.epub`
+    - `Side Stor(y/ies)/*.epub`
+    - `Short Stor(y/ies)/*.epub`
+  - `EPUB/`
+    - `*.epub`
+    - `Official*/`
+      - `*.epub`
+      - `Side Stor(y/ies)/*.epub`
+      - `Short Stor(y/ies)/*.epub`
+    - `Fan*/`
+      - `*.epub`
+      - `Side Stor(y/ies)/*.epub`
+      - `Short Stor(y/ies)/*.epub`
+    - `Side Stor(y/ies)/*.epub`
+    - `Short Stor(y/ies)/*.epub`
+  - `Part #/`
+    - `*.epub`
+    - `EPUB/`
+      - `*.epub`
+      - `Official*/`
+        - `*.epub`
+        - `Side Stor(y/ies)/*.epub`
+        - `Short Stor(y/ies)/*.epub`
+      - `Fan*/`
+        - `*.epub`
+        - `Side Stor(y/ies)/*.epub`
+        - `Short Stor(y/ies)/*.epub`
+      - `Side Stor(y/ies)/*.epub`
+      - `Short Stor(y/ies)/*.epub`
+    - `Official*/`
+      - `*.epub`
+      - `EPUB/*.epub`
+      - `Side Stor(y/ies)/` `Short Stor(y/ies)`
+        - `*.epub`
+        - `EPUB/*.epub`
+    - `Fan*/`
+      - `*.epub`
+      - `EPUB/*.epub`
+      - `Side Stor(y/ies)/` `Short Stor(y/ies)`
+        - `*.epub`
+        - `EPUB/*.epub`
+    - `Side Stor(y/ies)/` `Short Stor(y/ies)`
+      - `*.epub`
+      - `EPUB/*.epub`
 
 ## Usage
 

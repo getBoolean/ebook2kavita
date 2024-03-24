@@ -267,22 +267,78 @@ def find_series_epub_files(series_folder_path: str) -> list[tuple[str, str | Non
 
     Possible paths:
 
-    - `Part */EPUB/*.epub`
-    - `Part */EPUB/Side Story/*.epub`
-    - `Part */EPUB/Side Stories/*.epub`
-    - `EPUB/*.epub`
-    - `EPUB/Official/*.epub`
-    - `Official*/EPUB/*.epub`
-    - `Official*/*.epub`
-    - `Fan*/EPUB/*.epub`
-    - `Fan*/*.epub`
-    - `*.epub`
-    - `Light Novel/EPUB/*.epub`
-    - `Side Story/EPUB/*.epub`
-    - `EPUB/Side Story/*.epub`
-    - `Side Stories/EPUB/*.epub`
-    - `EPUB/Side Stories/*.epub`
+    - `<Series>/` / `<Series>/Light Novel/`
+        - `*.epub`
+        - `Side Stor(y/ies)/` / `Short Stor(y/ies)`
+            - `*.epub`
+            - `EPUB/*.epub`
+        - `Official*/`
+            - `*.epub`
+            - `EPUB/`
+                - `*.epub`
+                - `Side Stor(y/ies)/*.epub`
+                - `Short Stor(y/ies)/*.epub`
+            - `Side Stor(y/ies)/*.epub`
+            - `Short Stor(y/ies)/*.epub`
+            - `Digital Edition*/`
+                - `*.epub`
+                - `EPUB/`
+                    - `*.epub`
+                    - `Side Stor(y/ies)/*.epub`
+                    - `Short Stor(y/ies)/*.epub`
+                - `Side Stor(y/ies)/*.epub`
+                - `Short Stor(y/ies)/*.epub`
+        - `Fan*/`
+            - `*.epub`
+            - `EPUB/`
+                - `*.epub`
+                - `Side Stor(y/ies)/*.epub`
+                - `Short Stor(y/ies)/*.epub`
+            - `Side Stor(y/ies)/*.epub`
+            - `Short Stor(y/ies)/*.epub`
+        - `EPUB/`
+            - `*.epub`
+            - `Official*/`
+                - `*.epub`
+                - `Side Stor(y/ies)/*.epub`
+                - `Short Stor(y/ies)/*.epub`
+            - `Fan*/`
+                - `*.epub`
+                - `Side Stor(y/ies)/*.epub`
+                - `Short Stor(y/ies)/*.epub`
+            - `Side Stor(y/ies)/*.epub`
+            - `Short Stor(y/ies)/*.epub`
+        - `Part #/`
+            - `*.epub`
+            - `EPUB/`
+                - `*.epub`
+                - `Official*/`
+                    - `*.epub`
+                    - `Side Stor(y/ies)/*.epub`
+                    - `Short Stor(y/ies)/*.epub`
+                - `Fan*/`
+                    - `*.epub`
+                    - `Side Stor(y/ies)/*.epub`
+                    - `Short Stor(y/ies)/*.epub`
+                - `Side Stor(y/ies)/*.epub`
+                - `Short Stor(y/ies)/*.epub`
+            - `Official*/`
+                - `*.epub`
+                - `EPUB/*.epub`
+                - `Side Stor(y/ies)/` `Short Stor(y/ies)`
+                    - `*.epub`
+                    - `EPUB/*.epub`
+            - `Fan*/`
+                - `*.epub`
+                - `EPUB/*.epub`
+                - `Side Stor(y/ies)/` `Short Stor(y/ies)`
+                    - `*.epub`
+                    - `EPUB/*.epub`
+            - `Side Stor(y/ies)/` `Short Stor(y/ies)`
+                - `*.epub`
+                - `EPUB/*.epub`
     '''
+    # ignores web novel folders
     root_lightnovel_folder = find_lightnovel_folder(series_folder_path)
 
     root_official_folder = find_official_folder(root_lightnovel_folder)
@@ -300,6 +356,14 @@ def find_series_epub_files(series_folder_path: str) -> list[tuple[str, str | Non
         if has_epub_folder:
             epub_files += list_epub_files(official_epub_folder_path, series_folder_path)
 
+            sub_sidestory_folder = find_sidestory_folder(official_epub_folder_path)
+            if sub_sidestory_folder:
+                epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+
+        sub_sidestory_folder = find_sidestory_folder(root_official_folder)
+        if sub_sidestory_folder:
+            epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+
         digial_edition_folder = find_digital_edition_folder(root_official_folder)
         if digial_edition_folder:
             epub_files += list_epub_files(digial_edition_folder, series_folder_path)
@@ -309,6 +373,13 @@ def find_series_epub_files(series_folder_path: str) -> list[tuple[str, str | Non
             if has_epub_folder:
                 epub_files += list_epub_files(official_epub_folder_path, series_folder_path)
 
+                sub_sidestory_folder = find_sidestory_folder(official_epub_folder_path)
+                if sub_sidestory_folder:
+                    epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+
+            sub_sidestory_folder = find_sidestory_folder(digial_edition_folder)
+            if sub_sidestory_folder:
+                epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
 
     if root_fan_folder:
         epub_files += list_epub_files(root_fan_folder, series_folder_path)
@@ -317,6 +388,14 @@ def find_series_epub_files(series_folder_path: str) -> list[tuple[str, str | Non
         has_epub_folder = os.path.isdir(fan_epub_folder_path)
         if has_epub_folder:
             epub_files += list_epub_files(fan_epub_folder_path, series_folder_path)
+
+            sub_sidestory_folder = find_sidestory_folder(fan_epub_folder_path)
+            if sub_sidestory_folder:
+                epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+
+        sub_sidestory_folder = find_sidestory_folder(root_fan_folder)
+        if sub_sidestory_folder:
+            epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
 
     if has_root_epub_folder:
         epub_files += list_epub_files(root_epub_folder_path, series_folder_path)
@@ -341,46 +420,71 @@ def find_series_epub_files(series_folder_path: str) -> list[tuple[str, str | Non
     root_sidestory_folder = find_sidestory_folder(root_lightnovel_folder)
     if root_sidestory_folder:
         epub_files += list_epub_files(root_sidestory_folder, series_folder_path)
+        sub_epub_folder_path = os.path.join(root_sidestory_folder, 'EPUB')
+        has_sub_epub_folder = os.path.isdir(sub_epub_folder_path)
+        if has_sub_epub_folder:
+            epub_files += list_epub_files(sub_epub_folder_path, series_folder_path)
 
-    if root_part_folders:
-        for part_folder in root_part_folders:
-            sub_epub_folder_path = os.path.join(part_folder, 'EPUB')
-            has_sub_epub_folder = os.path.isdir(sub_epub_folder_path)
-            if has_sub_epub_folder:
-                # find official subfolder from folder
-                sub_official_folder = find_official_folder(sub_epub_folder_path)
-                sub_fan_folder = find_fan_folder(sub_epub_folder_path)
-                epub_files += list_epub_files(sub_epub_folder_path, series_folder_path)
-                if sub_official_folder:
-                    epub_files += list_epub_files(sub_official_folder, series_folder_path)
-                    sub_sidestory_folder = find_sidestory_folder(sub_official_folder)
+    for part_folder in root_part_folders:
+        epub_files += list_epub_files(part_folder, series_folder_path)
+        sub_epub_folder_path = os.path.join(part_folder, 'EPUB')
+        has_sub_epub_folder = os.path.isdir(sub_epub_folder_path)
+        if has_sub_epub_folder:
+            # find official subfolder from folder
+            sub_official_folder = find_official_folder(sub_epub_folder_path)
+            sub_fan_folder = find_fan_folder(sub_epub_folder_path)
+            epub_files += list_epub_files(sub_epub_folder_path, series_folder_path)
+            if sub_official_folder:
+                epub_files += list_epub_files(sub_official_folder, series_folder_path)
+                sub_sidestory_folder = find_sidestory_folder(sub_official_folder)
+                if sub_sidestory_folder:
+                    epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+            if sub_fan_folder:
+                epub_files += list_epub_files(sub_fan_folder, series_folder_path)
+                sub_sidestory_folder = find_sidestory_folder(sub_fan_folder)
+                if sub_sidestory_folder:
+                    epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+            sidestory_folder = find_sidestory_folder(sub_epub_folder_path)
+            if sidestory_folder:
+                epub_files += list_epub_files(sidestory_folder, series_folder_path)
+        else:
+            sub_official_folder = find_official_folder(part_folder)
+            sub_fan_folder = find_fan_folder(part_folder)
+            epub_files += list_epub_files(part_folder, series_folder_path)
+            if sub_official_folder:
+                epub_files += list_epub_files(sub_official_folder, series_folder_path)
+                sub_epub_folder_path = os.path.join(sub_official_folder, 'EPUB')
+                has_sub_epub_folder = os.path.isdir(sub_epub_folder_path)
+                if has_sub_epub_folder:
+                    epub_files += list_epub_files(sub_epub_folder_path, series_folder_path)
+
+                    sub_sidestory_folder = find_sidestory_folder(sub_epub_folder_path)
                     if sub_sidestory_folder:
                         epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
-                if sub_fan_folder:
-                    epub_files += list_epub_files(sub_fan_folder, series_folder_path)
-                    sub_sidestory_folder = find_sidestory_folder(sub_fan_folder)
+
+                sub_sidestory_folder = find_sidestory_folder(sub_official_folder)
+                if sub_sidestory_folder:
+                    epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+            if sub_fan_folder:
+                epub_files += list_epub_files(sub_fan_folder, series_folder_path)
+                sub_epub_folder_path = os.path.join(sub_fan_folder, 'EPUB')
+                has_sub_epub_folder = os.path.isdir(sub_epub_folder_path)
+                if has_sub_epub_folder:
+                    epub_files += list_epub_files(sub_epub_folder_path, series_folder_path)
+
+                    sub_sidestory_folder = find_sidestory_folder(sub_epub_folder_path)
                     if sub_sidestory_folder:
                         epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
-                sidestory_folder = find_sidestory_folder(sub_epub_folder_path)
-                if sidestory_folder:
-                    epub_files += list_epub_files(sidestory_folder, series_folder_path)
-            else:
-                sub_official_folder = find_official_folder(part_folder)
-                sub_fan_folder = find_fan_folder(part_folder)
-                epub_files += list_epub_files(part_folder, series_folder_path)
-                if sub_official_folder:
-                    epub_files += list_epub_files(sub_official_folder, series_folder_path)
-                    sub_sidestory_folder = find_sidestory_folder(sub_official_folder)
-                    if sub_sidestory_folder:
-                        epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
-                if sub_fan_folder:
-                    epub_files += list_epub_files(sub_fan_folder, series_folder_path)
-                    sub_sidestory_folder = find_sidestory_folder(sub_fan_folder)
-                    if sub_sidestory_folder:
-                        epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
-                sidestory_folder = find_sidestory_folder(part_folder)
-                if sidestory_folder:
-                    epub_files += list_epub_files(sidestory_folder, series_folder_path)
+                sub_sidestory_folder = find_sidestory_folder(sub_fan_folder)
+                if sub_sidestory_folder:
+                    epub_files += list_epub_files(sub_sidestory_folder, series_folder_path)
+            sidestory_folder = find_sidestory_folder(part_folder)
+            if sidestory_folder:
+                epub_files += list_epub_files(sidestory_folder, series_folder_path)
+                sub_epub_folder_path = os.path.join(sidestory_folder, 'EPUB')
+                has_sub_epub_folder = os.path.isdir(sub_epub_folder_path)
+                if has_sub_epub_folder:
+                    epub_files += list_epub_files(sub_epub_folder_path, series_folder_path)
 
     return epub_files
 
