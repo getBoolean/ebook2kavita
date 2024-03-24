@@ -66,6 +66,20 @@ def is_locked(filepath: str) -> bool | None:
     return locked
 
 
+def fix_epub(epub_file_path: str, dest_epub_path: str) -> None:
+    '''
+    Fix the given epub file.
+    '''
+    # Use calibre-meta to set the series and index
+    command = ['ebook-convert', epub_file_path, dest_epub_path]
+    while is_locked(epub_file_path):
+        time.sleep(2)
+    result = subprocess.run(command, shell=True, capture_output=True, check=False)
+
+    if result.returncode != 0:
+        print('Error:', result.stderr.decode('utf-8'), file=sys.stderr)
+
+
 def set_epub_series_and_index(epub_file_path: str,
                               series_title: str,
                               series_part_num: str | None,
@@ -233,7 +247,7 @@ def copy_epub_file(folder_index: int,
         folder_index
     )
 
-    shutil.copyfile(temp_epub_file, dest_epub_path)
+    fix_epub(temp_epub_file, dest_epub_path)
     while is_locked(temp_epub_file):
         time.sleep(2)
     shutil.rmtree(dirpath)
