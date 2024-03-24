@@ -92,7 +92,7 @@ def set_epub_series_and_index(epub_file_path: str,
     while is_locked(epub_file_path):
         time.sleep(2)
     # Run the command
-    result = subprocess.run(command, capture_output=True, check=False)
+    result = subprocess.run(command, shell=True, capture_output=True, check=False)
 
     # Check the output for errors
     if result.returncode != 0:
@@ -435,6 +435,7 @@ def convert_classification_to_plural(classification: str) -> str:
     else:
         return classification
 
+
 def copy_epub_files(src_dir: str, dest_dir: str) -> None:
     '''
     Copy epub files from JLN directory to a Kavita directory.
@@ -473,10 +474,10 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
             filename += path.suffix
             dest_epub_path = os.path.join(
                 dest_series_folder, filename)
-            if os.path.exists(dest_epub_path):
-                with open(dest_epub_path, 'rb') as df, open(dest_epub_path, 'rb') as f:
-                    epub_file_hash = hashlib.sha512(f.read()).digest()
-                    dest_epub_hash = hashlib.sha512(df.read()).digest()
+            if os.path.exists(dest_epub_path) and os.path.exists(epub_file_path):
+                with open(dest_epub_path, 'rb') as df, open(epub_file_path, 'rb') as f:
+                    epub_file_hash = hashlib.file_digest(f, hashlib.sha256)
+                    dest_epub_hash = hashlib.file_digest(df, hashlib.sha256)
                     if epub_file_hash == dest_epub_hash:
                         pbar.update(1)
                         continue
