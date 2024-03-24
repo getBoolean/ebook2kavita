@@ -31,8 +31,14 @@ PART_PATTERNS: list = [
     re.compile(r'pt[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
 ]
 
+SIDESTORY_PATTERNS: list = [
+    re.compile(r'ss[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
+    re.compile(r'extra[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
+    re.compile(r'special[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
+]
 
-def is_locked(filepath):
+
+def is_locked(filepath: str) -> bool | None:
     """Checks if a file is locked by opening it in append mode.
     If no exception thrown, then the file is not locked.
 
@@ -105,6 +111,11 @@ def extract_series_part_number(filename: str) -> str | None:
                 volume_match = volume_pattern.search(filename)
                 if volume_match and volume_match.start() < match.start():
                     return None
+            
+            for volume_pattern in SIDESTORY_PATTERNS:
+                volume_match = volume_pattern.search(filename)
+                if volume_match and volume_match.start() < match.start():
+                    return None
 
             try:
                 return match.group(1)
@@ -130,6 +141,11 @@ def extract_volume_part_number(filename: str) -> str | None:
                 volume_match = volume_pattern.search(filename)
                 if volume_match and volume_match.start() > match.start():
                     return None
+            
+            for volume_pattern in SIDESTORY_PATTERNS:
+                volume_match = volume_pattern.search(filename)
+                if volume_match and volume_match.start() > match.start():
+                    return None
 
             try:
                 return match.group(1)
@@ -145,6 +161,14 @@ def extract_volume_number(filename: str) -> str | None:
     '''
 
     for pattern in VOLUME_PATTERNS:
+        match = pattern.search(filename)
+        if match:
+            try:
+                return match.group(1)
+            except IndexError:
+                return match.group(0)
+
+    for pattern in SIDESTORY_PATTERNS:
         match = pattern.search(filename)
         if match:
             try:
@@ -168,7 +192,7 @@ def extract_volume_number(filename: str) -> str | None:
 # ************************************************************ #
 
 
-def copy_epub_file(series_folder_name, epub_file_path, dest_epub_path):
+def copy_epub_file(index: int, series_folder_path: str, series_folder_name: str, epub_file_path: str, dest_epub_path: str) -> None:
     '''
     Copy an epub file from JLN directory to a Kavita directory.
     '''
@@ -178,13 +202,47 @@ def copy_epub_file(series_folder_name, epub_file_path, dest_epub_path):
     vol_num = extract_volume_number(epub_filename)
     series_part_num = extract_series_part_number(epub_filename)
     volume_part_num = extract_volume_part_number(epub_filename)
+    series_name = series_folder_name
+
+    epub_file_path_relative = os.path.relpath(epub_file_path, series_folder_path)
+    is_side_story = is_side_story_folder(epub_file_path_relative)
+    if is_side_story:
+        series_name = series_folder_name + " - Side Stories"
+
+    is_short_story = is_short_story_folder(epub_file_path_relative)
+    if is_short_story:
+        series_name = series_folder_name + " - Short Stories"
+    
+    if vol_num is None:
+        vol_num = f'{index}'
+    
+
     set_epub_series_and_index(
-        temp_epub_file, series_folder_name,
-        series_part_num, vol_num, volume_part_num)
+        temp_epub_file,
+        series_name,
+        series_part_num,
+        vol_num,
+        volume_part_num
+    )
+
     shutil.copyfile(temp_epub_file, dest_epub_path)
     while is_locked(temp_epub_file):
         time.sleep(2)
     os.remove(temp_epub_file)
+
+def is_side_story_folder(epub_file_path_relative: str) -> bool:
+    folder_names = [
+        "side story",
+        "side stories",
+    ]
+    return any(folder_name in epub_file_path_relative.lower() for folder_name in folder_names)
+
+def is_short_story_folder(epub_file_path_relative: str) -> bool:
+    folder_names = [
+        "short story",
+        "short stories",
+    ]
+    return any(folder_name in epub_file_path_relative.lower() for folder_name in folder_names)
 
 
 def find_part_folders(series_folder_path: str) -> list[str]:
@@ -212,18 +270,21 @@ def find_series_epub_files(series_folder_path: str) -> list[str]:
     - `/Series/Official/*.epub`
     - `/Series/*.epub`
     - `/Series/Light Novel/EPUB/*.epub`
+    - `/Series/Side Story/EPUB/*.epub`
+    - `/Series/EPUB/Side Story/*.epub`
+    - `/Series/Part */EPUB/Side Story/*.epub`
+    - `/Series/Side Stories/EPUB/*.epub`
+    - `/Series/EPUB/Side Stories/*.epub`
+    - `/Series/Part */EPUB/Side Stories/*.epub`
     '''
     root_lightnovel_folder = find_lightnovel_folder(series_folder_path)
+
     root_official_folder = find_official_folder(root_lightnovel_folder)
+    root_sidestory_folder = find_sidestory_folder(root_lightnovel_folder)
     root_part_folders = find_part_folders(root_lightnovel_folder)
     epub_folder_path = os.path.join(root_lightnovel_folder, 'EPUB')
     has_root_epub_folder = os.path.isdir(epub_folder_path)
-    if has_root_epub_folder:
-        # find official subfolder from folder
-        official_folder = find_official_folder(epub_folder_path)
-        if official_folder:
-            epub_folder_path = official_folder
-    elif root_official_folder:
+    if root_official_folder:
         official_epub_folder_path = os.path.join(
             root_official_folder, 'EPUB')
         has_epub_folder = os.path.isdir(official_epub_folder_path)
@@ -231,37 +292,52 @@ def find_series_epub_files(series_folder_path: str) -> list[str]:
             epub_folder_path = official_epub_folder_path
         else:
             epub_folder_path = root_official_folder
+    elif has_root_epub_folder:
+        # find official subfolder from folder
+        official_folder = find_official_folder(epub_folder_path)
+        if official_folder:
+            epub_folder_path = official_folder
     else:
         epub_folder_path = root_lightnovel_folder
+    sub_sidestory_folder = find_sidestory_folder(epub_folder_path)
+
+    epub_files = []
+    if root_sidestory_folder:
+        epub_files += list_epub_files(root_sidestory_folder)
 
     if root_part_folders:
-        epub_files = []
         for part_folder in root_part_folders:
             part_epub_folder_path = os.path.join(part_folder, 'EPUB')
             has_part_epub_folder = os.path.isdir(part_epub_folder_path)
             if has_part_epub_folder:
                 # find official subfolder from folder
                 official_folder = find_official_folder(part_epub_folder_path)
+                sidestory_folder = find_sidestory_folder(part_epub_folder_path)
                 if official_folder:
                     part_epub_folder_path = official_folder
-                epub_files += [os.path.join(part_epub_folder_path, f)
-                               for f in os.listdir(part_epub_folder_path)
-                               if os.path.isfile(os.path.join(part_epub_folder_path, f))
-                               and f.lower().endswith('.epub')]
+                epub_files += list_epub_files(part_epub_folder_path)
+                if sidestory_folder:
+                    epub_files += list_epub_files(sidestory_folder)
             else:
-                epub_files += [os.path.join(part_folder, f)
-                               for f in os.listdir(part_folder)
-                               if os.path.isfile(os.path.join(part_folder, f))
-                               and f.lower().endswith('.epub')]
+                sidestory_folder = find_sidestory_folder(part_folder)
+                epub_files += list_epub_files(part_folder)
+                if sidestory_folder:
+                    epub_files += list_epub_files(sidestory_folder)
         return epub_files
+    
+    epub_files += list_epub_files(epub_folder_path)
+    if sub_sidestory_folder:
+        epub_files += list_epub_files(sub_sidestory_folder)
 
+    return epub_files
+
+def list_epub_files(epub_folder_path) -> list[str]:
     return [os.path.join(epub_folder_path, f)
             for f in os.listdir(epub_folder_path)
             if os.path.isfile(os.path.join(epub_folder_path, f))
             and f.lower().endswith('.epub')]
 
-
-def copy_epub_files(src_dir, dest_dir):
+def copy_epub_files(src_dir: str, dest_dir: str) -> None:
     '''
     Copy epub files from JLN directory to a Kavita directory.
     '''
@@ -291,14 +367,14 @@ def copy_epub_files(src_dir, dest_dir):
 
         print(f'{series_folder}:')
         pbar = tqdm(epub_file_paths)
-        for epub_file_path in pbar:
+        for index, epub_file_path in enumerate(pbar):
             dest_epub_path = os.path.join(
                 dest_series_folder, os.path.basename(epub_file_path))
             if os.path.exists(dest_epub_path):
                 pbar.update(1)
                 continue
 
-            copy_epub_file(series_folder, epub_file_path, dest_epub_path)
+            copy_epub_file(index, series_folder_path, series_folder, epub_file_path, dest_epub_path)
 
 
 def find_lightnovel_folder(series_folder_path: str) -> str:
@@ -323,7 +399,18 @@ def find_official_folder(epub_folder_path) -> str | None:
     return None
 
 
-def main():
+def find_sidestory_folder(epub_folder_path) -> str | None:
+    '''Find the side story folder in the given folder, or None if it does not exist
+    '''
+    for epub_sub_folder in os.listdir(epub_folder_path):
+        epub_sub_folder_path = os.path.join(
+            epub_folder_path, epub_sub_folder)
+        if os.path.isdir(epub_sub_folder_path) and (is_side_story_folder(epub_sub_folder) or is_short_story_folder(epub_sub_folder)):
+            return epub_sub_folder_path
+    return None
+
+
+def main() -> None:
     '''Main entry point for the script.
     '''
     parser = argparse.ArgumentParser(
