@@ -398,29 +398,39 @@ def classify_epub_file_type(epub_folder_path_relative: str) -> str | None:
     '''
     Classify the type of epub file based on its filename.
     '''
-    if is_side_story_folder(epub_folder_path_relative):
-        return "Side Story"
-    elif is_short_story_folder(epub_folder_path_relative):
-        return "Short Story"
-    elif "fan" in epub_folder_path_relative.lower():
-        return "Fan Translation"
-    elif "official" in epub_folder_path_relative.lower():
-        return "Official Translation"
-    else:
-        return None
+    is_side_story = is_side_story_folder(epub_folder_path_relative)
+    is_short_story = is_short_story_folder(epub_folder_path_relative)
+    is_fan = "fan" in epub_folder_path_relative.lower()
+    is_official = "official" in epub_folder_path_relative.lower()
+
+    translation_type = None
+    if is_fan:
+        translation_type = "Fan Translation"
+    elif is_official:
+        translation_type = "Official Translation"
+
+    special_type = None
+    if is_side_story:
+        special_type = "Side Story"
+    elif is_short_story:
+        special_type = "Short Story"
+
+    if translation_type and special_type:
+        return f"{special_type} {translation_type}"
+    elif translation_type:
+        return translation_type
+    elif special_type:
+        return special_type
+
 
 def convert_classification_to_plural(classification: str) -> str:
     '''
     Convert a classification to a plural form.
     '''
-    if classification == "Side Story":
-        return "Side Stories"
-    elif classification == "Short Story":
-        return "Short Stories"
-    elif classification == "Fan Translation":
-        return "Fan Translations"
-    elif classification == "Official Translation":
-        return "Official Translations"
+    if classification.endswith(" Translation"):
+        return classification.replace(" Translation", " Translations")
+    elif classification.endswith(" Story"):
+        return classification.replace(" Story", " Stories")
     else:
         return classification
 
