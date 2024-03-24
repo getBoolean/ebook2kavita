@@ -251,7 +251,7 @@ def copy_epub_file(pbar: tqdm,
         folder_index
     )
 
-    pbar.set_postfix(refresh=True, calibre='fixing')
+    pbar.set_postfix(refresh=True, calibre='convert')
     fix_epub(temp_epub_file, os.fspath(temp_fixed_epub_file_path))
     pbar.set_postfix(refresh=True, current='copying')
     shutil.copyfile(temp_fixed_epub_file_path, dest_epub_path)
