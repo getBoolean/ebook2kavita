@@ -67,24 +67,21 @@ def is_locked(filepath: str) -> bool | None:
     return locked
 
 
-def fix_epub(pbar: tqdm, epub_file_path: str, dest_epub_path: str) -> None:
+def fix_epub(epub_file_path: str, dest_epub_path: str) -> None:
     '''
     Fix the given epub file.
     '''
     # Use calibre-meta to set the series and index
     command = ['ebook-convert', epub_file_path, dest_epub_path]
     while is_locked(epub_file_path):
-        pbar.set_postfix(refresh=True, current='waiting')
         time.sleep(0.5)
-    pbar.set_postfix(refresh=True, calibre='repairs')
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
 
     if result.returncode != 0:
         print('Error:', result.stderr.decode('utf-8'), file=sys.stderr)
 
 
-def set_epub_series_and_index(pbar: tqdm,
-                              epub_file_path: str,
+def set_epub_series_and_index(epub_file_path: str,
                               series_title: str,
                               series_part_num: str | None,
                               volume_num: str | None,
@@ -93,7 +90,6 @@ def set_epub_series_and_index(pbar: tqdm,
     '''
     Set the series and index of an epub file using calibre.
     '''
-    pbar.set_postfix(refresh=True, calibre='addmeta')
     title: str = series_title
     if series_part_num:
         title = f'{series_title} Part {series_part_num}'
@@ -116,9 +112,7 @@ def set_epub_series_and_index(pbar: tqdm,
         command += ['--index', index]
 
     while is_locked(epub_file_path):
-        pbar.set_postfix(refresh=True, current='waiting')
         time.sleep(0.5)
-    pbar.set_postfix(refresh=True, calibre='addmeta')
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
 
     # Check the output for errors
@@ -246,9 +240,9 @@ def copy_epub_file(pbar: tqdm,
     if classification:
         series_name = series_folder_name + f' {convert_classification_to_plural(classification)}'
 
+    pbar.set_postfix(refresh=True, calibre='addmeta')
     metadata_thread = Thread(target = set_epub_series_and_index,
-                             args = (pbar,
-                                     temp_epub_file,
+                             args = (temp_epub_file,
                                      series_name,
                                      series_part_num,
                                      vol_num,
@@ -262,8 +256,9 @@ def copy_epub_file(pbar: tqdm,
     metadata_thread.join()
     pbar.update(0.2)
 
+    pbar.set_postfix(refresh=True, calibre='repairs')
     convert_thread = Thread(target = fix_epub,
-                            args = (pbar, temp_epub_file,
+                            args = (temp_epub_file,
                                     os.fspath(temp_fixed_epub_file_path)))
     convert_thread.start()
     while convert_thread.is_alive():
