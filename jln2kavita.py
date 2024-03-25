@@ -377,7 +377,7 @@ def classify_ebook_file_type(ebook_folder_path_relative: str) -> str | None:
     elif is_short_story:
         special_type = "Short Story"
     elif is_spinoff_series:
-        special_type = "Spin-off Series"
+        special_type = "Spin-off"
 
     book_type = None
     if is_webnovel:
