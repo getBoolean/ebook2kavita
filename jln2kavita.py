@@ -67,7 +67,8 @@ def is_locked(filepath: str) -> bool | None:
     return locked
 
 
-def convert_and_fix_ebook(src_ebook_file_path: str, target_epub_path: str) -> None:
+def convert_and_fix_ebook(src_ebook_file_path: str, target_epub_path: str,
+                          dont_split_on_page_breaks: bool) -> None:
     '''
     Convert a given eBook file, convert it to EPUB format, and fix any issues.
 
@@ -81,6 +82,9 @@ def convert_and_fix_ebook(src_ebook_file_path: str, target_epub_path: str) -> No
         sys.exit(1)
 
     command = ['ebook-convert', src_ebook_file_path, target_epub_path]
+    command += ["--no-default-epub-cover", "--no-svg-cover"]
+    if dont_split_on_page_breaks:
+        command += ["--dont-split-on-page-breaks"]
     while is_locked(src_ebook_file_path):
         time.sleep(0.5)
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
@@ -227,7 +231,8 @@ def copy_and_convert_ebook_file(pbar: tqdm,
                    classification: str | None,
                    series_folder_name: str,
                    source_ebook_file_path: str,
-                   target_epub_path: str) -> None:
+                   target_epub_path: str,
+                   dont_split_on_page_breaks: bool) -> None:
     '''
     Copy an eBook file from JLN directory to a Kavita directory.
     '''
@@ -248,7 +253,8 @@ def copy_and_convert_ebook_file(pbar: tqdm,
     temp_fixed_epub_file_path = dirpath.joinpath(path.stem + '.temp_fixed.epub')
     convert_thread = Thread(target = convert_and_fix_ebook,
                             args = (source_ebook_file_path,
-                                    os.fspath(temp_fixed_epub_file_path)))
+                                    os.fspath(temp_fixed_epub_file_path),
+                                    dont_split_on_page_breaks))
     convert_thread.start()
     while convert_thread.is_alive():
         sleep(1)
@@ -411,7 +417,8 @@ def convert_classification_to_plural(classification: str) -> str:
         return classification
 
 
-def copy_and_convert_ebook_files(src_dir: str, target_dir: str) -> None:
+def copy_and_convert_ebook_files(src_dir: str, target_dir: str,
+                                 dont_split_on_page_breaks: bool) -> None:
     '''
     Copy and convert eBook files recursively from source directory to the target Kavita directory.
     '''
@@ -464,7 +471,7 @@ def copy_and_convert_ebook_files(src_dir: str, target_dir: str) -> None:
                         continue
 
                 copy_and_convert_ebook_file(pbar, index, classification, series_folder,
-                            ebook_file_path, target_epub_path)
+                            ebook_file_path, target_epub_path, dont_split_on_page_breaks)
 
                 if index == len(ebook_file_paths) - 1:
                     pbar.set_postfix(refresh=True)
@@ -475,8 +482,18 @@ def main() -> None:
     '''
     parser = argparse.ArgumentParser(
         description='Copy eBook files from one directory to another', exit_on_error=False)
-    parser.add_argument('--src', help='source directory')
-    parser.add_argument('--target', help='target directory')
+    parser.add_argument('-s', '--src', help='source directory')
+    parser.add_argument('-t', '--target', help='target directory')
+    parser.add_argument('--dont-split-on-page-breaks',
+                        default=False,
+                        required=False,
+                        action=argparse.BooleanOptionalAction,
+                        help='Turn off splitting at page breaks. ' +
+                        'Normally, input files are automatically split at every page break ' +
+                        'into two files. This gives an output e-book that can be parsed ' +
+                        'faster and with less resources. However, splitting is slow and ' +
+                        'if your source file contains a very large number of page breaks, ' +
+                        'you should turn off splitting on page breaks.')
     args = parser.parse_args()
 
     if os.path.abspath(args.src) == os.path.abspath(args.target):
@@ -499,7 +516,7 @@ def main() -> None:
         os.makedirs(args.target)
 
     try:
-        copy_and_convert_ebook_files(args.src, args.target)
+        copy_and_convert_ebook_files(args.src, args.target, args.dont_split_on_page_breaks)
     except argparse.ArgumentTypeError as error:
         print(str(error), file=sys.stderr)
         sys.exit(1)
