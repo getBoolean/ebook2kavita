@@ -7,6 +7,7 @@ volume number to the EPUB metadata to ensure it groups and sorts correctly.
 
 - Groups `.epub` files into series based on series name, year/part #, short stories, web/light novel,
 and fan/official translation.
+- Repair malformed `.epub` files. (Note, in rare cases this may take a long time.)
 - Automatically runs Calibre's `DeDRM` plugin if it is installed.
 
 ## Usage
