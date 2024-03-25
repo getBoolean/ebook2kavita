@@ -9,7 +9,6 @@ import shutil
 import argparse
 import re
 import subprocess
-import hashlib
 import tempfile
 from pathlib import Path
 
@@ -66,21 +65,24 @@ def is_locked(filepath: str) -> bool | None:
     return locked
 
 
-def fix_epub(epub_file_path: str, dest_epub_path: str) -> None:
+def fix_epub(pbar: tqdm, epub_file_path: str, dest_epub_path: str) -> None:
     '''
     Fix the given epub file.
     '''
     # Use calibre-meta to set the series and index
     command = ['ebook-convert', epub_file_path, dest_epub_path]
     while is_locked(epub_file_path):
+        pbar.set_postfix(refresh=True, current='waiting')
         time.sleep(0.5)
+    pbar.set_postfix(refresh=True, calibre='convert')
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
 
     if result.returncode != 0:
         print('Error:', result.stderr.decode('utf-8'), file=sys.stderr)
 
 
-def set_epub_series_and_index(epub_file_path: str,
+def set_epub_series_and_index(pbar: tqdm,
+                              epub_file_path: str,
                               series_title: str,
                               series_part_num: str | None,
                               volume_num: str | None,
@@ -89,7 +91,7 @@ def set_epub_series_and_index(epub_file_path: str,
     '''
     Set the series and index of an epub file using calibre.
     '''
-    # Construct the command
+    pbar.set_postfix(refresh=True, calibre='addmeta')
     title: str = series_title
     if series_part_num:
         title = f'{series_title} Part {series_part_num}'
@@ -112,8 +114,9 @@ def set_epub_series_and_index(epub_file_path: str,
         command += ['--index', index]
 
     while is_locked(epub_file_path):
-        time.sleep(2)
-    # Run the command
+        pbar.set_postfix(refresh=True, current='waiting')
+        time.sleep(0.5)
+    pbar.set_postfix(refresh=True, calibre='addmeta')
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
 
     # Check the output for errors
@@ -230,7 +233,6 @@ def copy_epub_file(pbar: tqdm,
     # must end in .epub to be recognized by calibre's epub-meta
     temp_epub_file_path = dirpath.joinpath(path.stem + '.temp.epub')
     temp_fixed_epub_file_path = dirpath.joinpath(path.stem + '.temp_fixed.epub')
-    pbar.set_postfix(refresh=True, current='copying')
     temp_epub_file = shutil.copyfile(epub_file_path, os.fspath(temp_epub_file_path))
     epub_filename = os.path.basename(epub_file_path)
     vol_num = extract_volume_number(epub_filename)
@@ -241,8 +243,8 @@ def copy_epub_file(pbar: tqdm,
     if classification:
         series_name = series_folder_name + f' {convert_classification_to_plural(classification)}'
 
-    pbar.set_postfix(refresh=True, calibre='metadata')
     set_epub_series_and_index(
+        pbar,
         temp_epub_file,
         series_name,
         series_part_num,
@@ -251,14 +253,12 @@ def copy_epub_file(pbar: tqdm,
         folder_index
     )
 
-    pbar.set_postfix(refresh=True, calibre='convert')
-    fix_epub(temp_epub_file, os.fspath(temp_fixed_epub_file_path))
-    pbar.set_postfix(refresh=True, current='copying')
+    fix_epub(pbar, temp_epub_file, os.fspath(temp_fixed_epub_file_path))
     shutil.copyfile(temp_fixed_epub_file_path, dest_epub_path)
     while is_locked(temp_epub_file) or is_locked(os.fspath(temp_fixed_epub_file_path)):
-        time.sleep(0.5)
         pbar.set_postfix(refresh=True, current='waiting')
-    pbar.set_postfix(refresh=True)
+        time.sleep(0.5)
+    pbar.set_postfix(refresh=True, calibre='done...')
     shutil.rmtree(dirpath)
 
 def is_side_story_folder(epub_file_path_relative: str) -> bool:
