@@ -52,12 +52,13 @@ python jln2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
 ### Source Folder Structure
 
 ```txt
-Series A
-├─── **.epub (including subfolders)
-├─── <Classification>/**.epub (including subfolders)
-│   ...
-Series B
-│   ...
+Source Folder
+├─Series A
+│ ├─── **.epub (including subfolders)
+│ ├─── <Classification>/**.epub (including subfolders)
+│ │   ...
+│ Series B
+│ │   ...
 
 ```
 
@@ -66,12 +67,13 @@ Series B
 Generated file structure:
 
 ```txt
-Series A
-├─── Series A - v01.epub
-├─── Series A Side Story - v01 - <Classification>.epub
-│   ...
-Series B
-│   ...
+Target Folder
+├─Series A
+│ ├─── Series A - v01.epub
+│ ├─── Series A Side Story - v01 - <Classification>.epub
+│ │   ...
+│ Series B
+│ │   ...
 ```
 
 Series in Kavita:
