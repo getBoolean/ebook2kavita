@@ -266,7 +266,7 @@ def copy_epub_file(pbar: tqdm,
         if convert_thread.is_alive():
             pbar.update(0)
     convert_thread.join()
-    pbar.update(0.6)
+    pbar.update(0.7)
 
     shutil.copyfile(temp_fixed_epub_file_path, dest_epub_path)
     pbar.update(0.05)
@@ -275,7 +275,6 @@ def copy_epub_file(pbar: tqdm,
         time.sleep(0.5)
     pbar.set_postfix(refresh=True, calibre='done...')
     shutil.rmtree(dirpath)
-    pbar.update(0.1)
 
 def is_side_story_folder(epub_file_path_relative: str) -> bool:
     '''
