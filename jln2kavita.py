@@ -450,67 +450,6 @@ def copy_and_convert_ebook_files(src_dir: str, target_dir: str) -> None:
                     pbar.set_postfix(refresh=True)
 
 
-def find_lightnovel_folder(series_folder_path: str) -> str:
-    '''Find the light novel folder in the given folder, or `series_folder_path` if it is not found
-    '''
-    for series_sub_folder in os.listdir(series_folder_path):
-        series_sub_folder_path = os.path.join(
-            series_folder_path, series_sub_folder)
-        path_relative = os.path.relpath(series_sub_folder, series_folder_path)
-        if os.path.isdir(series_sub_folder_path) and 'light novel' in path_relative.lower():
-            return series_sub_folder_path
-    return series_folder_path
-
-
-def find_official_folder(epub_folder_path: str) -> str | None:
-    '''Find the official folder in the given folder, or None if it does not exist
-    '''
-    for epub_sub_folder in os.listdir(epub_folder_path):
-        epub_sub_folder_path = os.path.join(
-            epub_folder_path, epub_sub_folder)
-        path_relative = os.path.relpath(epub_sub_folder, epub_folder_path)
-        if os.path.isdir(epub_sub_folder_path) and 'official' in path_relative.lower():
-            return epub_sub_folder_path
-    return None
-
-
-def find_digital_edition_folder(epub_folder_path: str) -> str | None:
-    '''Find the digital edition folder in the given folder, or None if it does not exist
-    '''
-    for epub_sub_folder in os.listdir(epub_folder_path):
-        epub_sub_folder_path = os.path.join(
-            epub_folder_path, epub_sub_folder)
-        path_relative = os.path.relpath(epub_sub_folder, epub_folder_path)
-        if os.path.isdir(epub_sub_folder_path) and 'digital edition' in path_relative.lower():
-            return epub_sub_folder_path
-    return None
-
-
-def find_fan_folder(epub_folder_path: str) -> str | None:
-    '''Find the fan folder in the given folder, or None if it does not exist
-    '''
-    for epub_sub_folder in os.listdir(epub_folder_path):
-        epub_sub_folder_path = os.path.join(
-            epub_folder_path, epub_sub_folder)
-        path_relative = os.path.relpath(epub_sub_folder, epub_folder_path)
-        if os.path.isdir(epub_sub_folder_path) and 'fan' in path_relative.lower():
-            return epub_sub_folder_path
-    return None
-
-
-def find_sidestory_folder(epub_folder_path: str) -> str | None:
-    '''Find the side story folder in the given folder, or None if it does not exist
-    '''
-    for epub_sub_folder in os.listdir(epub_folder_path):
-        epub_sub_folder_path = os.path.join(
-            epub_folder_path, epub_sub_folder)
-        path_relative = os.path.relpath(epub_sub_folder, epub_folder_path)
-        is_side_story = is_side_story_folder(path_relative) or is_short_story_folder(path_relative)
-        if os.path.isdir(epub_sub_folder_path) and is_side_story:
-            return epub_sub_folder_path
-    return None
-
-
 def main() -> None:
     '''Main entry point for the script.
     '''
