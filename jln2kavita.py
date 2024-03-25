@@ -11,6 +11,8 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
+from threading import Thread
+from time import sleep
 
 from tqdm import tqdm
 
@@ -244,19 +246,33 @@ def copy_epub_file(pbar: tqdm,
     if classification:
         series_name = series_folder_name + f' {convert_classification_to_plural(classification)}'
 
-    set_epub_series_and_index(
-        pbar,
-        temp_epub_file,
-        series_name,
-        series_part_num,
-        vol_num,
-        volume_part_num,
-        folder_index
-    )
+    metadata_thread = Thread(target = set_epub_series_and_index,
+                             args = (pbar,
+                                     temp_epub_file,
+                                     series_name,
+                                     series_part_num,
+                                     vol_num,
+                                     volume_part_num,
+                                     folder_index))
+    metadata_thread.start()
+    while metadata_thread.is_alive():
+        sleep(1)
+        if metadata_thread.is_alive():
+            pbar.update(0)
+    metadata_thread.join()
     pbar.update(0.2)
 
-    fix_epub(pbar, temp_epub_file, os.fspath(temp_fixed_epub_file_path))
+    convert_thread = Thread(target = fix_epub,
+                            args = (pbar, temp_epub_file,
+                                    os.fspath(temp_fixed_epub_file_path)))
+    convert_thread.start()
+    while convert_thread.is_alive():
+        sleep(1)
+        if convert_thread.is_alive():
+            pbar.update(0)
+    convert_thread.join()
     pbar.update(0.6)
+
     shutil.copyfile(temp_fixed_epub_file_path, dest_epub_path)
     pbar.update(0.05)
     while is_locked(temp_epub_file) or is_locked(os.fspath(temp_fixed_epub_file_path)):
@@ -405,7 +421,8 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
 
         print(f'{series_folder}:')
         with tqdm(epub_file_paths, unit='file', dynamic_ncols=True, total=len(epub_file_paths),
-                    bar_format=
+                  miniters=0,
+                  bar_format=
                     '{desc}: ' +
                     '{percentage:.3f}%|{bar}| ' +
                     '{n:.2f}/{total_fmt} ' +
