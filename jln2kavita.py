@@ -448,7 +448,6 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
 
                 if index == len(epub_file_paths) - 1:
                     pbar.set_postfix(refresh=True)
-                pbar.moveto(index + 1)
 
 
 def find_lightnovel_folder(series_folder_path: str) -> str:
