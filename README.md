@@ -5,7 +5,7 @@ Converts an eBook folder structure to a Kavita folder structure, adding required
 ## Features
 
 - Groups ebook files into Kavita series based on subfolders and filenames
-- Repair malformed `.epub` files. *(Note: in rare cases this may be very slow)*
+- Repair malformed `.epub` files. *(In rare cases this may be very slow even with `--dont-split-on-page-breaks` enabled)*
 - Convert eBook non-EPUB files to EPUB (See [Supported file extensions](#supported-file-extensions))
 - Automatically run Calibre plugin [DeDRM](https://github.com/noDRM/DeDRM_tools) *(only if installed)*
 
@@ -25,6 +25,12 @@ python jln2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
 
 # Example: python jln2kavita.py --src "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light Novels" --target "B:\Media Server\Light Novels"
 ```
+
+### Arguments
+
+- `--src`: Source directory, see [Source Folder Structure](#source-folder-structure)
+- `--target`: Target directory
+- `--dont-split-on-page-breaks`: Turn off splitting at page breaks. Normally, input files are automatically split at every page break into two files. This gives an output e-book that can be parsed faster and with less resources. However, splitting is slow and if your source file contains a very large number of page breaks, you should turn off splitting on page breaks.
 
 ## About
 
