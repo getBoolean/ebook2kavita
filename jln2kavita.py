@@ -67,12 +67,12 @@ def is_locked(filepath: str) -> bool | None:
     return locked
 
 
-def fix_epub(epub_file_path: str, dest_epub_path: str) -> None:
+def fix_epub(epub_file_path: str, target_epub_path: str) -> None:
     '''
     Fix the given epub file.
     '''
     # Use calibre-meta to set the series and index
-    command = ['ebook-convert', epub_file_path, dest_epub_path]
+    command = ['ebook-convert', epub_file_path, target_epub_path]
     while is_locked(epub_file_path):
         time.sleep(0.5)
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
@@ -219,12 +219,12 @@ def copy_epub_file(pbar: tqdm,
                    classification: str | None,
                    series_folder_name: str,
                    epub_file_path: str,
-                   dest_epub_path: str) -> None:
+                   target_epub_path: str) -> None:
     '''
     Copy an epub file from JLN directory to a Kavita directory.
     '''
     # Use calibre-meta to set the series and index
-    path = Path(dest_epub_path)
+    path = Path(target_epub_path)
     dirpath = Path(tempfile.mkdtemp())
     # must end in .epub to be recognized by calibre's epub-meta
     temp_epub_file_path = dirpath.joinpath(path.stem + '.temp.epub')
@@ -268,7 +268,7 @@ def copy_epub_file(pbar: tqdm,
     convert_thread.join()
     pbar.update(0.7)
 
-    shutil.copyfile(temp_fixed_epub_file_path, dest_epub_path)
+    shutil.copyfile(temp_fixed_epub_file_path, target_epub_path)
     pbar.update(0.05)
     while is_locked(temp_epub_file) or is_locked(os.fspath(temp_fixed_epub_file_path)):
         pbar.set_postfix(refresh=True, current='waiting')
@@ -385,19 +385,19 @@ def convert_classification_to_plural(classification: str) -> str:
         return classification
 
 
-def copy_epub_files(src_dir: str, dest_dir: str) -> None:
+def copy_epub_files(src_dir: str, target_dir: str) -> None:
     '''
     Copy epub files from JLN directory to a Kavita directory.
     '''
     src = os.path.abspath(src_dir)
-    dest = os.path.abspath(dest_dir)
+    target = os.path.abspath(target_dir)
 
     if not os.path.isdir(src):
         raise argparse.ArgumentTypeError(
             f'Source directory does not exist: {src_dir}')
 
-    if not os.path.exists(dest):
-        os.makedirs(dest)
+    if not os.path.exists(target):
+        os.makedirs(target)
 
     for series_folder in os.listdir(src):
         series_folder_path = os.path.join(src, series_folder)
@@ -405,9 +405,9 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
         if not os.path.isdir(series_folder_path):
             continue
 
-        dest_series_folder = os.path.join(dest, series_folder)
-        if not os.path.exists(dest_series_folder):
-            os.makedirs(dest_series_folder)
+        target_series_folder = os.path.join(target, series_folder)
+        if not os.path.exists(target_series_folder):
+            os.makedirs(target_series_folder)
 
         epub_file_paths = find_series_epub_files(series_folder_path)
         if not epub_file_paths:
@@ -427,18 +427,18 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
                 if classification:
                     filename += f' - {classification}'
                 filename += path.suffix
-                dest_epub_path = os.path.join(
-                    dest_series_folder, filename)
-                if os.path.exists(dest_epub_path) and os.path.exists(epub_file_path):
+                target_epub_path = os.path.join(
+                    target_series_folder, filename)
+                if os.path.exists(target_epub_path) and os.path.exists(epub_file_path):
                     # compare modified times
-                    dest_mtime = os.path.getmtime(dest_epub_path)
+                    target_mtime = os.path.getmtime(target_epub_path)
                     src_mtime = os.path.getmtime(epub_file_path)
-                    if dest_mtime > src_mtime:
+                    if target_mtime > src_mtime:
                         pbar.update(1)
                         continue
 
                 copy_epub_file(pbar, index, classification, series_folder,
-                            epub_file_path, dest_epub_path)
+                            epub_file_path, target_epub_path)
 
                 if index == len(epub_file_paths) - 1:
                     pbar.set_postfix(refresh=True)
@@ -510,17 +510,16 @@ def main() -> None:
     '''
     parser = argparse.ArgumentParser(
         description='Copy EPUB files from one directory to another', exit_on_error=False)
-    parser.add_argument('src_dir', help='source directory')
-    parser.add_argument('dest_dir', help='destination directory')
+    parser.add_argument('--src', help='source directory')
+    parser.add_argument('--target', help='target directory')
     args = parser.parse_args()
 
-    # src and dest must not point to the same directory
-    if os.path.abspath(args.src_dir) == os.path.abspath(args.dest_dir):
-        print('Source and destination directories must not be the same.', file=sys.stderr)
+    if os.path.abspath(args.src) == os.path.abspath(args.target):
+        print('Source and target directories must not be the same.', file=sys.stderr)
         sys.exit(1)
 
     try:
-        copy_epub_files(args.src_dir, args.dest_dir)
+        copy_epub_files(args.src, args.target)
     except argparse.ArgumentTypeError as error:
         print(str(error), file=sys.stderr)
         sys.exit(1)
