@@ -28,6 +28,7 @@ python jln2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
 
 ## About
 
+- Nothing is modified in the source directory.
 - Only [supported eBook files](#supported-file-extensions) are copied to the target directory.
 - Adds the series name and volume number to the eBook metadata required by Kavita
   - The series name is the name of the folder containing the eBook folder plus the classification (see [Source folder structure](#source-folder-structure))
