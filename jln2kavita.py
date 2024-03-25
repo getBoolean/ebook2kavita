@@ -409,7 +409,7 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
                     '{desc}: ' +
                     '{percentage:.3f}%|{bar}| ' +
                     '{n:.2f}/{total_fmt} ' +
-                    '[{elapsed}<{remaining},{rate_fmt}{postfix}]') as pbar:
+                    '[{elapsed}<{remaining}, {rate_fmt}{postfix}]') as pbar:
             for index, (epub_file_path, classification) in enumerate(epub_file_paths):
                 path = Path(epub_file_path)
                 filename = path.stem
