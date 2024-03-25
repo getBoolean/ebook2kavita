@@ -6,7 +6,7 @@ Converts an eBook folder structure to a Kavita folder structure, adding required
 
 - Groups ebook files into Kavita series based on subfolders and filenames
 - Repair malformed `.epub` files. *(Note: in rare cases this may be very slow)*
-- Convert non-EPUB files to EPUB (See [Supported file extensions](#supported-file-extensions))
+- Convert eBook non-EPUB files to EPUB (See [Supported file extensions](#supported-file-extensions))
 - Automatically run Calibre plugin [DeDRM](https://github.com/noDRM/DeDRM_tools) *(only if installed)*
 
 ## Requirements
@@ -23,16 +23,17 @@ Converts an eBook folder structure to a Kavita folder structure, adding required
 ```bash
 python jln2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
 
-# e.g.: python jln2kavita.py --src "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light Novels" --target "B:\Media Server\Light Novels"
+# Example: python jln2kavita.py --src "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light Novels" --target "B:\Media Server\Light Novels"
 ```
 
 ## About
 
-- Only EPUB files are copied to the target directory.
-- Adds the series name and volume number to the EPUB metadata required by Kavita
-  - The series name is the name of the folder containing the EPUB folder plus the classification (see [Source folder structure](#source-folder-structure))
-  - The series part number and volume number are extracted from the EPUB filename using regex.
-- Classification is determined by the subfolders an EPUB belongs to, case intensitive:
+- Only [supported eBook files](#supported-file-extensions) are copied to the target directory.
+- Adds the series name and volume number to the eBook metadata required by Kavita
+  - The series name is the name of the folder containing the eBook folder plus the classification (see [Source folder structure](#source-folder-structure))
+  - The series part number and volume number are extracted from the eBook filename using regex.
+  - eBook Non-EPUB files are converted to EPUB using Calibre's `ebook-convert` command.
+- Classification is determined by the subfolders an eBook belongs to, case intensitive:
   - Light Novel
   - Web Novel
   - Short Story/Stories

@@ -1,5 +1,5 @@
 '''
-Script to convert a JLN epub directory structure to a Kavita directory structure.
+Script to convert an eBook folder structure to a Kavita folder structure.
 '''
 
 import os
@@ -18,7 +18,7 @@ from tqdm import tqdm
 
 
 # ************************************************************ #
-# ***************** START OF EPUB META UTILS ***************** #
+# ***************** START OF EBOOK META UTILS ***************** #
 # ************************************************************ #
 
 
@@ -67,13 +67,15 @@ def is_locked(filepath: str) -> bool | None:
     return locked
 
 
-def convert_and_fix_epub(epub_file_path: str, target_epub_path: str) -> None:
+def convert_and_fix_ebook(src_ebook_file_path: str, target_epub_path: str) -> None:
     '''
-    Fix the given epub file.
+    Convert a given eBook file, convert it to EPUB format, and fix any issues.
+
+    This also runs Calibre plugin [DeDRM](https://github.com/noDRM/DeDRM_tools)
+    if it is installed.
     '''
-    # Use calibre-meta to set the series and index
-    command = ['ebook-convert', epub_file_path, target_epub_path]
-    while is_locked(epub_file_path):
+    command = ['ebook-convert', src_ebook_file_path, target_epub_path]
+    while is_locked(src_ebook_file_path):
         time.sleep(0.5)
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
 
@@ -81,14 +83,14 @@ def convert_and_fix_epub(epub_file_path: str, target_epub_path: str) -> None:
         print('Error:', result.stderr.decode('utf-8'), file=sys.stderr)
 
 
-def set_epub_series_and_index(epub_file_path: str,
+def set_epub_series_and_index(target_epub_file_path: str,
                               series_title: str,
                               series_part_num: str | None,
                               volume_num: str | None,
                               volume_part_num: str | None,
                               folder_index: int) -> None:
     '''
-    Set the series and index of an epub file using calibre.
+    Set the series and index of an eBook file using calibre.
     '''
     title: str = series_title
     if series_part_num:
@@ -100,7 +102,7 @@ def set_epub_series_and_index(epub_file_path: str,
               file=sys.stderr)
         sys.exit(1)
 
-    command = ['ebook-meta', epub_file_path, '--series', title]
+    command = ['ebook-meta', target_epub_file_path, '--series', title]
 
     if volume_num is not None:
         index = volume_num
@@ -111,7 +113,7 @@ def set_epub_series_and_index(epub_file_path: str,
         index = f'1.{folder_index}'
         command += ['--index', index]
 
-    while is_locked(epub_file_path):
+    while is_locked(target_epub_file_path):
         time.sleep(0.5)
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
 
@@ -210,36 +212,49 @@ def extract_volume_number(filename: str) -> str | None:
 
 
 # ************************************************************ #
-# ****************** END OF EPUB META UTILS ****************** #
+# ****************** END OF EBOOK META UTILS ****************** #
 # ************************************************************ #
 
 
-def copy_epub_file(pbar: tqdm,
+def copy_and_convert_ebook_file(pbar: tqdm,
                    folder_index: int,
                    classification: str | None,
                    series_folder_name: str,
-                   epub_file_path: str,
+                   source_ebook_file_path: str,
                    target_epub_path: str) -> None:
     '''
-    Copy an epub file from JLN directory to a Kavita directory.
+    Copy an eBook file from JLN directory to a Kavita directory.
     '''
     # Use calibre-meta to set the series and index
     path = Path(target_epub_path)
     dirpath = Path(tempfile.mkdtemp())
-    # must end in .epub to be recognized by calibre's epub-meta
-    temp_epub_file_path = dirpath.joinpath(path.stem + '.temp' + path.suffix)
-    temp_epub_file = shutil.copyfile(epub_file_path, os.fspath(temp_epub_file_path))
     pbar.update(0.05)
-    epub_filename = os.path.basename(epub_file_path)
-    vol_num = extract_volume_number(epub_filename)
-    series_part_num = extract_series_part_number(epub_filename)
-    volume_part_num = extract_volume_part_number(epub_filename)
+    ebook_filename = os.path.basename(source_ebook_file_path)
+    vol_num = extract_volume_number(ebook_filename)
+    series_part_num = extract_series_part_number(ebook_filename)
+    volume_part_num = extract_volume_part_number(ebook_filename)
     series_name = series_folder_name
 
     if classification:
         series_name = series_folder_name + f' {convert_classification_to_plural(classification)}'
 
+    pbar.set_postfix(refresh=True, calibre='repairs')
+    temp_fixed_epub_file_path = dirpath.joinpath(path.stem + '.temp_fixed.epub')
+    convert_thread = Thread(target = convert_and_fix_ebook,
+                            args = (source_ebook_file_path,
+                                    os.fspath(temp_fixed_epub_file_path)))
+    convert_thread.start()
+    while convert_thread.is_alive():
+        sleep(1)
+        if convert_thread.is_alive():
+            pbar.update(0)
+    convert_thread.join()
+    pbar.update(0.7)
+
     pbar.set_postfix(refresh=True, calibre='addmeta')
+    # must end in a supported eBook file extension to be recognized by calibre's ebook-meta tool
+    temp_epub_file_path = dirpath.joinpath(path.stem + '.temp.epub')
+    temp_epub_file = shutil.copyfile(temp_fixed_epub_file_path, os.fspath(temp_epub_file_path))
     metadata_thread = Thread(target = set_epub_series_and_index,
                              args = (temp_epub_file,
                                      series_name,
@@ -255,20 +270,7 @@ def copy_epub_file(pbar: tqdm,
     metadata_thread.join()
     pbar.update(0.2)
 
-    pbar.set_postfix(refresh=True, calibre='repairs')
-    temp_fixed_epub_file_path = dirpath.joinpath(path.stem + '.temp_fixed.epub')
-    convert_thread = Thread(target = convert_and_fix_epub,
-                            args = (temp_epub_file,
-                                    os.fspath(temp_fixed_epub_file_path)))
-    convert_thread.start()
-    while convert_thread.is_alive():
-        sleep(1)
-        if convert_thread.is_alive():
-            pbar.update(0)
-    convert_thread.join()
-    pbar.update(0.7)
-
-    shutil.copyfile(temp_fixed_epub_file_path, target_epub_path)
+    shutil.copyfile(temp_epub_file_path, target_epub_path)
     pbar.update(0.05)
     while is_locked(temp_epub_file) or is_locked(os.fspath(temp_fixed_epub_file_path)):
         pbar.set_postfix(refresh=True, current='waiting')
@@ -276,7 +278,7 @@ def copy_epub_file(pbar: tqdm,
     pbar.set_postfix(refresh=True, calibre='done...')
     shutil.rmtree(dirpath)
 
-def is_side_story_folder(epub_file_path_relative: str) -> bool:
+def is_side_story_folder(ebook_file_path_relative: str) -> bool:
     '''
     Check if the given path is a side story folder.
     '''
@@ -285,9 +287,9 @@ def is_side_story_folder(epub_file_path_relative: str) -> bool:
         "side stories",
         "spin-off series",
     ]
-    return any(folder_name in epub_file_path_relative.lower() for folder_name in folder_names)
+    return any(folder_name in ebook_file_path_relative.lower() for folder_name in folder_names)
 
-def is_short_story_folder(epub_file_path_relative: str) -> bool:
+def is_short_story_folder(ebook_file_path_relative: str) -> bool:
     '''
     Check if the given path is a short story folder.
     '''
@@ -295,31 +297,12 @@ def is_short_story_folder(epub_file_path_relative: str) -> bool:
         "short story",
         "short stories",
     ]
-    return any(folder_name in epub_file_path_relative.lower() for folder_name in folder_names)
+    return any(folder_name in ebook_file_path_relative.lower() for folder_name in folder_names)
 
 
-def find_part_folders(series_folder_path: str) -> list[str]:
-    '''Find the part folders in the given folder
+def list_ebook_files(series_folder_path: str) -> list[tuple[str, str | None]]:
     '''
-    part_folders = []
-    for series_sub_folder in os.listdir(series_folder_path):
-        series_sub_folder_path = os.path.join(
-            series_folder_path, series_sub_folder)
-        if os.path.isdir(series_sub_folder_path) and 'part' in series_sub_folder.lower():
-            part_folders.append(series_sub_folder_path)
-    return part_folders
-
-
-def find_series_epub_files(series_folder_path: str) -> list[tuple[str, str | None]]:
-    '''
-    Find the epub files in the given series folder recursively.
-    '''
-
-    return list_epub_files(series_folder_path)
-
-def list_epub_files(series_folder_path: str) -> list[tuple[str, str | None]]:
-    '''
-    List all epub files in the given folder, with a classification based on the folder name.
+    List all eBook files in the given folder, with a classification based on the folder name.
     '''
     ebook_extensions: set[str] = {
         '.epub',
@@ -345,7 +328,7 @@ def list_epub_files(series_folder_path: str) -> list[tuple[str, str | None]]:
     }
     return [
         (os.path.join(dirpath, f),
-            classify_epub_file_type(os.path.relpath(dirpath, series_folder_path))
+            classify_ebook_file_type(os.path.relpath(dirpath, series_folder_path))
         )
         for dirpath, dirnames, filenames in os.walk(series_folder_path)
             for f in filenames
@@ -353,16 +336,16 @@ def list_epub_files(series_folder_path: str) -> list[tuple[str, str | None]]:
                     and any(f.lower().endswith(ext) for ext in ebook_extensions))
     ]
 
-def classify_epub_file_type(epub_folder_path_relative: str) -> str | None:
+def classify_ebook_file_type(ebook_folder_path_relative: str) -> str | None:
     '''
-    Classify the type of epub file based on its filename.
+    Classify the type of eBook file based on its filename and subfolders.
     '''
-    is_side_story = is_side_story_folder(epub_folder_path_relative)
-    is_short_story = is_short_story_folder(epub_folder_path_relative)
-    is_fan = "fan" in epub_folder_path_relative.lower()
-    is_official = "official" in epub_folder_path_relative.lower()
-    is_webnovel = "web novel" in epub_folder_path_relative.lower()
-    is_lightnovel = "light novel" in epub_folder_path_relative.lower()
+    is_side_story = is_side_story_folder(ebook_folder_path_relative)
+    is_short_story = is_short_story_folder(ebook_folder_path_relative)
+    is_fan = "fan" in ebook_folder_path_relative.lower()
+    is_official = "official" in ebook_folder_path_relative.lower()
+    is_webnovel = "web novel" in ebook_folder_path_relative.lower()
+    is_lightnovel = "light novel" in ebook_folder_path_relative.lower()
 
     translation_type = None
     if is_fan:
@@ -408,9 +391,9 @@ def convert_classification_to_plural(classification: str) -> str:
         return classification
 
 
-def copy_epub_files(src_dir: str, target_dir: str) -> None:
+def copy_and_convert_ebook_files(src_dir: str, target_dir: str) -> None:
     '''
-    Copy epub files from JLN directory to a Kavita directory.
+    Copy and convert eBook files recursively from source directory to the target Kavita directory.
     '''
     src = os.path.abspath(src_dir)
     target = os.path.abspath(target_dir)
@@ -432,38 +415,38 @@ def copy_epub_files(src_dir: str, target_dir: str) -> None:
         if not os.path.exists(target_series_folder):
             os.makedirs(target_series_folder)
 
-        epub_file_paths = find_series_epub_files(series_folder_path)
-        if not epub_file_paths:
+        ebook_file_paths = list_ebook_files(series_folder_path)
+        if not ebook_file_paths:
             continue
 
         print(f'{series_folder}:')
-        with tqdm(epub_file_paths, dynamic_ncols=True, total=len(epub_file_paths),
+        with tqdm(ebook_file_paths, dynamic_ncols=True, total=len(ebook_file_paths),
                   miniters=0,
                   bar_format=
                     '{desc}: ' +
                     '{percentage:.3f}%|{bar}| ' +
                     '{n:.2f}/{total_fmt} ' +
                     '[{elapsed}<{remaining}, {rate_fmt}{postfix}]') as pbar:
-            for index, (epub_file_path, classification) in enumerate(epub_file_paths):
-                path = Path(epub_file_path)
+            for index, (ebook_file_path, classification) in enumerate(ebook_file_paths):
+                path = Path(ebook_file_path)
                 filename = path.stem
                 if classification:
                     filename += f' - {classification}'
                 filename += path.suffix
                 target_epub_path = os.path.join(
                     target_series_folder, filename)
-                if os.path.exists(target_epub_path) and os.path.exists(epub_file_path):
+                if os.path.exists(target_epub_path) and os.path.exists(ebook_file_path):
                     # compare modified times
                     target_mtime = os.path.getmtime(target_epub_path)
-                    src_mtime = os.path.getmtime(epub_file_path)
+                    src_mtime = os.path.getmtime(ebook_file_path)
                     if target_mtime > src_mtime:
                         pbar.update(1)
                         continue
 
-                copy_epub_file(pbar, index, classification, series_folder,
-                            epub_file_path, target_epub_path)
+                copy_and_convert_ebook_file(pbar, index, classification, series_folder,
+                            ebook_file_path, target_epub_path)
 
-                if index == len(epub_file_paths) - 1:
+                if index == len(ebook_file_paths) - 1:
                     pbar.set_postfix(refresh=True)
 
 
@@ -532,7 +515,7 @@ def main() -> None:
     '''Main entry point for the script.
     '''
     parser = argparse.ArgumentParser(
-        description='Copy EPUB files from one directory to another', exit_on_error=False)
+        description='Copy eBook files from one directory to another', exit_on_error=False)
     parser.add_argument('--src', help='source directory')
     parser.add_argument('--target', help='target directory')
     args = parser.parse_args()
@@ -557,7 +540,7 @@ def main() -> None:
         os.makedirs(args.target)
 
     try:
-        copy_epub_files(args.src, args.target)
+        copy_and_convert_ebook_files(args.src, args.target)
     except argparse.ArgumentTypeError as error:
         print(str(error), file=sys.stderr)
         sys.exit(1)
