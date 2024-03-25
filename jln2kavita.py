@@ -74,6 +74,12 @@ def convert_and_fix_ebook(src_ebook_file_path: str, target_epub_path: str) -> No
     This also runs Calibre plugin [DeDRM](https://github.com/noDRM/DeDRM_tools)
     if it is installed.
     '''
+    if not shutil.which('ebook-convert'):
+        print('Error: Calibre\'s ebook-convert not found in the path. ' +
+              'Please install Calibre and add the installation directory to the PATH.',
+              file=sys.stderr)
+        sys.exit(1)
+
     command = ['ebook-convert', src_ebook_file_path, target_epub_path]
     while is_locked(src_ebook_file_path):
         time.sleep(0.5)
