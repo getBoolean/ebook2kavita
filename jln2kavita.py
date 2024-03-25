@@ -97,8 +97,8 @@ def set_epub_series_and_index(pbar: tqdm,
         title = f'{series_title} Part {series_part_num}'
 
     if not shutil.which('ebook-meta'):
-        print('Error: Calibre\'s ebook-meta not found in the path. \
-              Please install Calibre and add the installation directory to the PATH.',
+        print('Error: Calibre\'s ebook-meta not found in the path. ' +
+              'Please install Calibre and add the installation directory to the PATH.',
               file=sys.stderr)
         sys.exit(1)
 
@@ -234,6 +234,7 @@ def copy_epub_file(pbar: tqdm,
     temp_epub_file_path = dirpath.joinpath(path.stem + '.temp.epub')
     temp_fixed_epub_file_path = dirpath.joinpath(path.stem + '.temp_fixed.epub')
     temp_epub_file = shutil.copyfile(epub_file_path, os.fspath(temp_epub_file_path))
+    pbar.update(0.05)
     epub_filename = os.path.basename(epub_file_path)
     vol_num = extract_volume_number(epub_filename)
     series_part_num = extract_series_part_number(epub_filename)
@@ -252,14 +253,18 @@ def copy_epub_file(pbar: tqdm,
         volume_part_num,
         folder_index
     )
+    pbar.update(0.2)
 
     fix_epub(pbar, temp_epub_file, os.fspath(temp_fixed_epub_file_path))
+    pbar.update(0.6)
     shutil.copyfile(temp_fixed_epub_file_path, dest_epub_path)
+    pbar.update(0.05)
     while is_locked(temp_epub_file) or is_locked(os.fspath(temp_fixed_epub_file_path)):
         pbar.set_postfix(refresh=True, current='waiting')
         time.sleep(0.5)
     pbar.set_postfix(refresh=True, calibre='done...')
     shutil.rmtree(dirpath)
+    pbar.update(0.1)
 
 def is_side_story_folder(epub_file_path_relative: str) -> bool:
     '''
@@ -399,27 +404,34 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
             continue
 
         print(f'{series_folder}:')
-        pbar = tqdm(epub_file_paths)
-        for index, (epub_file_path, classification) in enumerate(pbar):
-            path = Path(epub_file_path)
-            filename = path.stem
-            if classification:
-                filename += f' - {classification}'
-            filename += path.suffix
-            dest_epub_path = os.path.join(
-                dest_series_folder, filename)
-            if os.path.exists(dest_epub_path) and os.path.exists(epub_file_path):
-                # compare modified times
-                dest_mtime = os.path.getmtime(dest_epub_path)
-                src_mtime = os.path.getmtime(epub_file_path)
-                if dest_mtime > src_mtime:
-                    pbar.update(1)
-                    continue
+        with tqdm(epub_file_paths, unit='file', dynamic_ncols=True, total=len(epub_file_paths),
+                    bar_format=
+                    '{desc}: ' +
+                    '{percentage:.3f}%|{bar}| ' +
+                    '{n:.2f}/{total_fmt} ' +
+                    '[{elapsed}<{remaining},{rate_fmt}{postfix}]') as pbar:
+            for index, (epub_file_path, classification) in enumerate(epub_file_paths):
+                path = Path(epub_file_path)
+                filename = path.stem
+                if classification:
+                    filename += f' - {classification}'
+                filename += path.suffix
+                dest_epub_path = os.path.join(
+                    dest_series_folder, filename)
+                if os.path.exists(dest_epub_path) and os.path.exists(epub_file_path):
+                    # compare modified times
+                    dest_mtime = os.path.getmtime(dest_epub_path)
+                    src_mtime = os.path.getmtime(epub_file_path)
+                    if dest_mtime > src_mtime:
+                        pbar.update(1)
+                        continue
 
-            copy_epub_file(pbar, index, classification, series_folder,
-                           epub_file_path, dest_epub_path)
+                copy_epub_file(pbar, index, classification, series_folder,
+                            epub_file_path, dest_epub_path)
 
-        pbar.close()
+                if index == len(epub_file_paths) - 1:
+                    pbar.set_postfix(refresh=True)
+                pbar.moveto(index + 1)
 
 
 def find_lightnovel_folder(series_folder_path: str) -> str:
