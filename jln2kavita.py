@@ -74,7 +74,7 @@ def fix_epub(pbar: tqdm, epub_file_path: str, dest_epub_path: str) -> None:
     while is_locked(epub_file_path):
         pbar.set_postfix(refresh=True, current='waiting')
         time.sleep(0.5)
-    pbar.set_postfix(refresh=True, calibre='convert')
+    pbar.set_postfix(refresh=True, calibre='repairs')
     result = subprocess.run(command, shell=True, capture_output=True, check=False)
 
     if result.returncode != 0:
