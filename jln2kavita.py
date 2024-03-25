@@ -295,6 +295,17 @@ def is_side_story_folder(ebook_file_path_relative: str) -> bool:
     ]
     return any(folder_name in ebook_file_path_relative.lower() for folder_name in folder_names)
 
+def is_spinoff_series_folder(ebook_file_path_relative: str) -> bool:
+    '''
+    Check if the given path is a spinoff folder.
+    '''
+    folder_names = [
+        "spin-off",
+        "spinoff",
+        "spin off",
+    ]
+    return any(folder_name in ebook_file_path_relative.lower() for folder_name in folder_names)
+
 def is_short_story_folder(ebook_file_path_relative: str) -> bool:
     '''
     Check if the given path is a short story folder.
@@ -347,6 +358,7 @@ def classify_ebook_file_type(ebook_folder_path_relative: str) -> str | None:
     Classify the type of eBook file based on its filename and subfolders.
     '''
     is_side_story = is_side_story_folder(ebook_folder_path_relative)
+    is_spinoff_series = is_spinoff_series_folder(ebook_folder_path_relative)
     is_short_story = is_short_story_folder(ebook_folder_path_relative)
     is_fan = "fan" in ebook_folder_path_relative.lower()
     is_official = "official" in ebook_folder_path_relative.lower()
@@ -364,6 +376,8 @@ def classify_ebook_file_type(ebook_folder_path_relative: str) -> str | None:
         special_type = "Side Story"
     elif is_short_story:
         special_type = "Short Story"
+    elif is_spinoff_series:
+        special_type = "Spin-off Series"
 
     book_type = None
     if is_webnovel:
