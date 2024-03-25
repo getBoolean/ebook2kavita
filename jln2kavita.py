@@ -420,7 +420,7 @@ def copy_epub_files(src_dir: str, dest_dir: str) -> None:
             continue
 
         print(f'{series_folder}:')
-        with tqdm(epub_file_paths, unit='file', dynamic_ncols=True, total=len(epub_file_paths),
+        with tqdm(epub_file_paths, dynamic_ncols=True, total=len(epub_file_paths),
                   miniters=0,
                   bar_format=
                     '{desc}: ' +
