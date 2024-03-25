@@ -67,7 +67,7 @@ def is_locked(filepath: str) -> bool | None:
     return locked
 
 
-def fix_epub(epub_file_path: str, target_epub_path: str) -> None:
+def convert_and_fix_epub(epub_file_path: str, target_epub_path: str) -> None:
     '''
     Fix the given epub file.
     '''
@@ -227,8 +227,7 @@ def copy_epub_file(pbar: tqdm,
     path = Path(target_epub_path)
     dirpath = Path(tempfile.mkdtemp())
     # must end in .epub to be recognized by calibre's epub-meta
-    temp_epub_file_path = dirpath.joinpath(path.stem + '.temp.epub')
-    temp_fixed_epub_file_path = dirpath.joinpath(path.stem + '.temp_fixed.epub')
+    temp_epub_file_path = dirpath.joinpath(path.stem + '.temp' + path.suffix)
     temp_epub_file = shutil.copyfile(epub_file_path, os.fspath(temp_epub_file_path))
     pbar.update(0.05)
     epub_filename = os.path.basename(epub_file_path)
@@ -257,7 +256,8 @@ def copy_epub_file(pbar: tqdm,
     pbar.update(0.2)
 
     pbar.set_postfix(refresh=True, calibre='repairs')
-    convert_thread = Thread(target = fix_epub,
+    temp_fixed_epub_file_path = dirpath.joinpath(path.stem + '.temp_fixed.epub')
+    convert_thread = Thread(target = convert_and_fix_epub,
                             args = (temp_epub_file,
                                     os.fspath(temp_fixed_epub_file_path)))
     convert_thread.start()
@@ -321,13 +321,36 @@ def list_epub_files(series_folder_path: str) -> list[tuple[str, str | None]]:
     '''
     List all epub files in the given folder, with a classification based on the folder name.
     '''
+    ebook_extensions: set[str] = {
+        '.epub',
+        '.azw4',
+        '.azw3',
+        '.azw',
+        '.chm',
+        '.djvu',
+        '.docx',
+        '.fb2',
+        '.htlz',
+        '.html',
+        '.lit',
+        '.lrf',
+        '.mobi',
+        '.odt',
+        '.pdb',
+        '.pml',
+        '.rb',
+        '.rtf',
+        '.snb',
+        '.tcr',
+    }
     return [
         (os.path.join(dirpath, f),
             classify_epub_file_type(os.path.relpath(dirpath, series_folder_path))
         )
         for dirpath, dirnames, filenames in os.walk(series_folder_path)
             for f in filenames
-                if os.path.isfile(os.path.join(dirpath, f)) and f.lower().endswith('.epub')
+                if (os.path.isfile(os.path.join(dirpath, f))
+                    and any(f.lower().endswith(ext) for ext in ebook_extensions))
     ]
 
 def classify_epub_file_type(epub_folder_path_relative: str) -> str | None:

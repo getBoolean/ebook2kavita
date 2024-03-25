@@ -1,11 +1,12 @@
 # jln2kavita
 
-Converts an EPUB folder structure to a Kavita folder structure, adding required metadata and repairing malformed EPUB files.
+Converts an eBook folder structure to a Kavita folder structure, adding required metadata and repairing malformed EPUB files.
 
 ## Features
 
-- Groups `.epub` files into Kavita series based on subfolders and filenames
+- Groups ebook files into Kavita series based on subfolders and filenames
 - Repair malformed `.epub` files. *(Note: in rare cases this may be very slow)*
+- Convert non-EPUB files to EPUB (See [Supported file extensions](#supported-file-extensions))
 - Automatically run Calibre plugin [DeDRM](https://github.com/noDRM/DeDRM_tools) *(only if installed)*
 
 ## Requirements
@@ -40,7 +41,7 @@ python jln2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
   - **Fan** Translation
   - **Official** Translation
 
-### Source folder structure
+### Source Folder Structure
 
 ```txt
 Series A
@@ -52,7 +53,7 @@ Series B
 
 ```
 
-### Example generated Kavita series
+### Example Generated Kavita Series
 
 Generated file structure:
 
@@ -78,7 +79,32 @@ Series B
 │   ...
 ```
 
-### Program output snippet
+### Supported File Extensions
+
+Only `epub` has been tested, but these others may work:
+
+- `.epub`
+- `.azw4`
+- `.azw3`
+- `.azw`
+- `.chm`
+- `.djvu`
+- `.docx`
+- `.fb2`
+- `.htlz`
+- `.html`
+- `.lit`
+- `.lrf`
+- `.mobi`
+- `.odt`
+- `.pdb`
+- `.pml`
+- `.rb`
+- `.rtf`
+- `.snb`
+- `.tcr`
+
+### Program Output Snippet
 
 ```txt
 High School Prodigies Have It Easy Even in Another World!:
