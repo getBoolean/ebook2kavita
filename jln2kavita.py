@@ -518,6 +518,21 @@ def main() -> None:
         print('Source and target directories must not be the same.', file=sys.stderr)
         sys.exit(1)
 
+    if not os.path.exists(args.src):
+        print(f'Source directory does not exist: {args.src}', file=sys.stderr)
+        sys.exit(1)
+
+    if not os.path.isdir(args.src):
+        print(f'Source is not a directory: {args.src}', file=sys.stderr)
+        sys.exit(1)
+
+    if os.path.exists(args.target):
+        if not os.path.isdir(args.target):
+            print(f'Target is not a directory: {args.target}', file=sys.stderr)
+            sys.exit(1)
+    else:
+        os.makedirs(args.target)
+
     try:
         copy_epub_files(args.src, args.target)
     except argparse.ArgumentTypeError as error:
