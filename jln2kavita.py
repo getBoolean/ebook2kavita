@@ -504,6 +504,11 @@ def main() -> None:
     parser.add_argument('dest_dir', help='destination directory')
     args = parser.parse_args()
 
+    # src and dest must not point to the same directory
+    if os.path.abspath(args.src_dir) == os.path.abspath(args.dest_dir):
+        print('Source and destination directories must not be the same.', file=sys.stderr)
+        sys.exit(1)
+
     try:
         copy_epub_files(args.src_dir, args.dest_dir)
     except argparse.ArgumentTypeError as error:
