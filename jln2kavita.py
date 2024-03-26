@@ -257,7 +257,7 @@ def extract_volume_number(filename: str) -> str | None:
 # ************************************************************ #
 
 
-def copy_ebook_file(
+def copy_epub_file(
     pbar: tqdm,
     folder_index: int,
     classification: str | None,
@@ -479,7 +479,7 @@ def convert_classification_to_plural(classification: str) -> str:
     return classification
 
 
-def copy_ebook_files(
+def copy_epub_files(
     src_dir: str, target_dir: str, dont_split_on_page_breaks: bool
 ) -> None:
     """
@@ -534,7 +534,7 @@ def copy_ebook_files(
                         pbar.update(1)
                         continue
 
-                copy_ebook_file(
+                copy_epub_file(
                     pbar,
                     index,
                     classification,
@@ -590,7 +590,7 @@ def main() -> None:
         os.makedirs(args.target)
 
     try:
-        copy_ebook_files(args.src, args.target, args.dont_split_on_page_breaks)
+        copy_epub_files(args.src, args.target, args.dont_split_on_page_breaks)
     except argparse.ArgumentTypeError as error:
         print(str(error), file=sys.stderr)
         sys.exit(1)
