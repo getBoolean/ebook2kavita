@@ -1,70 +1,123 @@
 # jln2kavita
 
-Converts a JLN folder structure to a Kavita folder structure so that EPUBS can be indexed by Kavita, and adds the series name and
-volume number to the EPUB metadata to ensure it groups and sorts correctly.
+Converts an eBook folder structure to a Kavita folder structure, adding required metadata and repairing malformed EPUB files.
 
-Supported folder structures:
+## Features
 
-- `/Series/Part */EPUB/*.epub`
-- `/Series/EPUB/*.epub`
-- `/Series/EPUB/Official/*.epub`
-- `/Series/Official/EPUB/*.epub`
-- `/Series/Official/*.epub`
-- `/Series/*.epub`
-- `/Series/Light Novel/EPUB/*.epub`
+- Groups ebook files into Kavita series based on subfolders and filenames
+- Repair malformed `.epub` files. *(In rare cases this may be very slow even with `--dont-split-on-page-breaks` enabled)*
+- Convert eBook non-EPUB files to EPUB (See [Supported file extensions](#supported-file-extensions))
+- Automatically run Calibre plugin [DeDRM](https://github.com/noDRM/DeDRM_tools) *(only if installed)*
 
 ## Usage
 
+### Requirements
+
+- [Python 3.11+](https://www.python.org/downloads/)
+- [Calibre 7+](https://calibre-ebook.com/) *(plus installation directory in `PATH`)*
+
+### Running the script
+
+1. Install software listed in [Requirements](#requirements)
+1. Clone this repository and open Powershell to the repository directory
+1. Install the python dependencies: `pip install -r requirements.txt`
+1. Start the script with the following command:
+
 ```bash
-# Source -> Target
-python .\jln2kavita.py "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light Novels" "B:\Media Server\Light Novels"
+python jln2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
+
+# Example: python jln2kavita.py --src "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light Novels" --target "B:\Media Server\Light Novels"
 ```
 
-## Requirements
+### Arguments
 
-- Python 3
-- Calibre 6
-- [tqdm](https://pypi.org/project/tqdm/) (`pip install tqdm`)
+- `--src`: Source directory, see [Source Folder Structure](#source-folder-structure)
+- `--target`: Target directory
+- `--dont-split-on-page-breaks`: Turn off splitting at page breaks. Normally, input files are automatically split at every page break into two files. This gives an output e-book that can be parsed faster and with less resources. However, splitting is slow and if your source file contains a very large number of page breaks, you should turn off splitting on page breaks. ([Calibre ebook-convert](https://manual.calibre-ebook.com/generated/en/ebook-convert.html#cmdoption-ebook-convert-epub-output-dont-split-on-page-breaks))
 
 ## About
 
-- This script converts the JLN folder structure to a Kavita folder structure.
-- Only EPUB files are copied to the target directory.
-- Adds the series name and volume number to the EPUB metadata to ensure it groups and sorts correctly.
-  - The series name added is the name of the folder containing the EPUB folder (see `Supported folder structures:`).
-  - The volume number/index is extracted from the EPUB filename using regex.
-- Subfolders (with the exception of folders that contain "official") are ignored, so spinoffs might be missed. This is intentional, and won't be fixed.
-If all subfolders were included, both fan translations and official translations could be copied to the target directory.
-  - If you identify any spinoffs it missed, you can manually copy it to the series `Specials` folder in the target directory.
-- It tries to prioritize official translations over fan translations. If the official translation folder is found, the fan translation isn't copied.
-  - If you want the fan translations, you can manually copy them to the series folder in the target directory or create a separate series folder for it.
+- Nothing is modified in the source directory.
+- Only [supported eBook files](#supported-file-extensions) are copied to the target directory.
+  - Non-EPUB eBook files are converted to EPUB using Calibre's `ebook-convert` command.
+- Adds the series name and volume number to the eBook metadata required by Kavita
+  - Series name: Root folder's of the eBook in the source directory, plus the classification (see [Source folder structure](#source-folder-structure))
+  - Series part number and volume number: Extracted from the eBook filename using regex.
+- Classification is determined by the subfolders an eBook belongs to, case intensitive:
+  - Light Novel
+  - Web Novel
+  - Short Story/Stories
+  - Side Story/Stories
+  - Spin-off Series
+  - **Fan** Translation
+  - **Official** Translation
 
-JLN folder structure:
+### Source Folder Structure
 
 ```txt
-Series A
-├───EPUB
-│       Series A - 01.epub
-│       ...
-├───PDF
-│       Series A - 01.pdf
-│       ...
-Series B
-│   ...
+Source Folder
+├─Series A
+│ ├─── **.epub (including subfolders)
+│ ├─── <Classification>/**.epub (including subfolders)
+│ │   ...
+│ Series B
+│ │   ...
 
 ```
 
-Kavita folder structure:
+### Example Generated Kavita Series
+
+Generated file structure:
+
+```txt
+Target Folder
+├─Series A
+│ ├─── Series A - v01.epub
+│ ├─── Series A Side Story - v01 - <Classification>.epub
+│ │   ...
+│ Series B
+│ │   ...
+```
+
+Series in Kavita:
 
 ```txt
 Series A
-│   Series A - 01.epub
+├─── Series A, Vol. 1
+│   ...
+Series A <Classification>
+├─── Series A Side Story, Vol. 1
 │   ...
 Series B
 │   ...
 ```
 
-Program output snippet:
+### Supported File Extensions
+
+Only `epub` has been tested, but these others may work:
+
+- `.epub`
+- `.azw4`
+- `.azw3`
+- `.azw`
+- `.chm`
+- `.djvu`
+- `.docx`
+- `.fb2`
+- `.htlz`
+- `.html`
+- `.lit`
+- `.lrf`
+- `.mobi`
+- `.odt`
+- `.pdb`
+- `.pml`
+- `.rb`
+- `.rtf`
+- `.snb`
+- `.tcr`
+
+### Program Output Snippet
 
 ```txt
 High School Prodigies Have It Easy Even in Another World!:
