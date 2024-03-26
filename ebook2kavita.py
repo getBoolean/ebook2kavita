@@ -267,7 +267,7 @@ def copy_ebook_file(
     dont_split_on_page_breaks: bool,
 ) -> None:
     """
-    Copy an eBook file from JLN directory to a Kavita directory.
+    Copy an eBook file from the source eBook folder structure to the target Kavita directory.
     """
     # Use calibre-meta to set the series and index
     path = Path(target_epub_path)

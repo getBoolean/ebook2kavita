@@ -1,4 +1,4 @@
-# jln2kavita
+# ebook2kavita
 
 Converts an eBook folder structure to a Kavita folder structure, adding required metadata and repairing malformed EPUB files.
 
@@ -24,9 +24,9 @@ Converts an eBook folder structure to a Kavita folder structure, adding required
 1. Start the script with the following command:
 
 ```bash
-python jln2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
+python ebook2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
 
-# Example: python jln2kavita.py --src "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light Novels" --target "B:\Media Server\Light Novels"
+# Example: python ebook2kavita.py --src "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light Novels" --target "B:\Media Server\Light Novels"
 ```
 
 ### Arguments
