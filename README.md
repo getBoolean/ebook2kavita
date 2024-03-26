@@ -11,14 +11,15 @@ Converts an eBook folder structure to a Kavita folder structure, adding required
 
 ## Requirements
 
-- `Python 3.11+` - `choco install python`
-- [Calibre 7+](https://calibre-ebook.com/) and add the installation directory to the `PATH` environment variable
-- [tqdm](https://pypi.org/project/tqdm/): `pip install tqdm`
+- [Python 3.11+](https://www.python.org/downloads/)
+- [Calibre 7+](https://calibre-ebook.com/) *(plus installation directory in `PATH`)*
 
 ## Usage
 
-1. Clone this repository
-1. Open Powershell to the repository directory and run the following command:
+1. Install software listed in [Requirements](#requirements)
+1. Clone this repository and open Powershell to the repository directory
+1. Install the python dependencies: `pip install -r requirements.txt`
+1. Start the script with the following command:
 
 ```bash
 python jln2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
