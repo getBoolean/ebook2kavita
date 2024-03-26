@@ -48,13 +48,13 @@ SIDESTORY_PATTERNS: list[re.Pattern] = [
 ]
 
 
-def is_locked(filepath: str) -> bool | None:
+def is_locked(filepath: str) -> bool:
     """Checks if a file is locked by opening it in append mode.
     If no exception thrown, then the file is not locked.
 
     Source: https://www.calazan.com/how-to-check-if-a-file-is-locked-in-python/
     """
-    locked = None
+    locked = False
     if os.path.exists(filepath):
         try:
             buffer_size = 8
