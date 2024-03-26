@@ -55,19 +55,14 @@ def is_locked(filepath: str) -> bool | None:
     Source: https://www.calazan.com/how-to-check-if-a-file-is-locked-in-python/
     """
     locked = None
-    file_object = None
     if os.path.exists(filepath):
         try:
             buffer_size = 8
             # Opening file in append mode and read the first 8 characters.
-            file_object = open(filepath, "a", buffer_size, encoding="utf-8")
-            if file_object:
+            with open(filepath, "a", buffer_size, encoding="utf-8"):
                 locked = False
         except IOError:
             locked = True
-        finally:
-            if file_object:
-                file_object.close()
     return locked
 
 
@@ -458,18 +453,20 @@ def classify_ebook_file_type(ebook_folder_path_relative: str) -> str | None:
 
     if translation_type and special_type and book_type:
         return f"{book_type} {special_type} {translation_type}"
-    elif translation_type and special_type:
+    if translation_type and special_type:
         return f"{special_type} {translation_type}"
-    elif book_type and special_type:
+    if book_type and special_type:
         return f"{book_type} {special_type}"
-    elif translation_type and book_type:
+    if translation_type and book_type:
         return f"{book_type} {translation_type}"
-    elif translation_type:
+    if translation_type:
         return translation_type
-    elif special_type:
+    if special_type:
         return special_type
-    elif book_type:
+    if book_type:
         return book_type
+
+    return None
 
 
 def convert_classification_to_plural(classification: str) -> str:
@@ -478,8 +475,8 @@ def convert_classification_to_plural(classification: str) -> str:
     """
     if classification.endswith(" Story"):
         return classification.replace(" Story", " Stories")
-    else:
-        return classification
+
+    return classification
 
 
 def copy_ebook_files(
@@ -593,9 +590,7 @@ def main() -> None:
         os.makedirs(args.target)
 
     try:
-        copy_ebook_files(
-            args.src, args.target, args.dont_split_on_page_breaks
-        )
+        copy_ebook_files(args.src, args.target, args.dont_split_on_page_breaks)
     except argparse.ArgumentTypeError as error:
         print(str(error), file=sys.stderr)
         sys.exit(1)
