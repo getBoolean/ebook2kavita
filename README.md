@@ -9,12 +9,14 @@ Converts an eBook folder structure to a Kavita folder structure, adding required
 - Convert eBook non-EPUB files to EPUB (See [Supported file extensions](#supported-file-extensions))
 - Automatically run Calibre plugin [DeDRM](https://github.com/noDRM/DeDRM_tools) *(only if installed)*
 
-## Requirements
+## Usage
+
+### Requirements
 
 - [Python 3.11+](https://www.python.org/downloads/)
 - [Calibre 7+](https://calibre-ebook.com/) *(plus installation directory in `PATH`)*
 
-## Usage
+### Running the script
 
 1. Install software listed in [Requirements](#requirements)
 1. Clone this repository and open Powershell to the repository directory
