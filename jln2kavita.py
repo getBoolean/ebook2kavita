@@ -13,6 +13,7 @@ import tempfile
 from pathlib import Path
 from threading import Thread
 from time import sleep
+from typing import Literal
 
 from tqdm import tqdm
 
@@ -22,7 +23,7 @@ from tqdm import tqdm
 # ************************************************************ #
 
 
-VOLUME_PATTERNS: list = [
+VOLUME_PATTERNS: list[re.Pattern] = [
     re.compile(r'v[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
     re.compile(r'vol[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
     re.compile(r'volume[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
@@ -31,13 +32,16 @@ VOLUME_PATTERNS: list = [
 
 BACKUP_VOLUME_PATTERN = re.compile(r'\b\d+(?:\.\d+)?\b')
 
-PART_PATTERNS: list = [
+PART_PATTERNS: list[re.Pattern] = [
     re.compile(r'part[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
     re.compile(r'pt[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
+]
+
+YEAR_PATTERNS: list[re.Pattern] = [
     re.compile(r'year[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
 ]
 
-SIDESTORY_PATTERNS: list = [
+SIDESTORY_PATTERNS: list[re.Pattern] = [
     re.compile(r'ss[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
     re.compile(r'extra[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
     re.compile(r'special[\s.-]*(\d+(\.\d+)?)', re.IGNORECASE),
@@ -95,6 +99,7 @@ def convert_and_fix_ebook(src_ebook_file_path: str, target_epub_path: str,
 
 def set_epub_series_and_index(target_epub_file_path: str,
                               series_title: str,
+                              series_year_num: str | None,
                               series_part_num: str | None,
                               volume_num: str | None,
                               volume_part_num: str | None,
@@ -103,8 +108,11 @@ def set_epub_series_and_index(target_epub_file_path: str,
     Set the series and index of an eBook file using calibre.
     '''
     title: str = series_title
+    if series_year_num:
+        title += f' Year {series_year_num}'
+
     if series_part_num:
-        title = f'{series_title} Part {series_part_num}'
+        title += f' Part {series_part_num}'
 
     if not shutil.which('ebook-meta'):
         print('Error: Calibre\'s ebook-meta not found in the path. ' +
@@ -132,31 +140,18 @@ def set_epub_series_and_index(target_epub_file_path: str,
         print('Error:', result.stderr.decode('utf-8'), file=sys.stderr)
 
 
+def extract_series_year_number(filename: str) -> str | None:
+    '''
+    Extract the part number from the filename.
+    '''
+    return extract_part_pattern(filename, YEAR_PATTERNS, part_type="series")
+
+
 def extract_series_part_number(filename: str) -> str | None:
     '''
     Extract the part number from the filename.
     '''
-
-    for pattern in PART_PATTERNS:
-        match = pattern.search(filename)
-        if match:
-            # Check that series part pattern must come before VOLUME_PATTERNS
-            for volume_pattern in VOLUME_PATTERNS:
-                volume_match = volume_pattern.search(filename)
-                if volume_match and volume_match.start() < match.start():
-                    return None
-
-            for volume_pattern in SIDESTORY_PATTERNS:
-                volume_match = volume_pattern.search(filename)
-                if volume_match and volume_match.start() < match.start():
-                    return None
-
-            try:
-                return match.group(1)
-            except IndexError:
-                return match.group(0)
-
-    return None
+    return extract_part_pattern(filename, PART_PATTERNS, part_type="series")
 
 
 def extract_volume_part_number(filename: str) -> str | None:
@@ -166,19 +161,29 @@ def extract_volume_part_number(filename: str) -> str | None:
     Note that this won't work for files with both series parts and volume parts
     such as `Title Part 2 - Volume 1 Part 2`. It will (likely) return None.
     '''
+    return extract_part_pattern(filename, PART_PATTERNS, part_type="volume")
 
-    for pattern in PART_PATTERNS:
+
+def extract_part_pattern(filename: str, patterns: list[re.Pattern], part_type: Literal["series", "volume"]) -> str | None:
+    '''
+    Extract the part number from the filename.
+
+    Note that volume won't work for files with both series parts and volume parts
+    such as `Title Part 2 - Volume 1 Part 2`. It will (likely) return None.
+    '''
+
+    for pattern in patterns:
         match = pattern.search(filename)
         if match:
             # Check that series part pattern must come after VOLUME_PATTERNS
             for volume_pattern in VOLUME_PATTERNS:
-                volume_match = volume_pattern.search(filename)
-                if volume_match and volume_match.start() > match.start():
+                volume_matches = matches_pattern(filename, match, volume_pattern, part_type)
+                if volume_matches:
                     return None
 
             for volume_pattern in SIDESTORY_PATTERNS:
-                volume_match = volume_pattern.search(filename)
-                if volume_match and volume_match.start() > match.start():
+                volume_matches = matches_pattern(filename, match, volume_pattern, part_type)
+                if volume_matches:
                     return None
 
             try:
@@ -187,6 +192,21 @@ def extract_volume_part_number(filename: str) -> str | None:
                 return match.group(0)
 
     return None
+
+
+def matches_pattern(filename: str, match: re.Match[str], pattern: re.Pattern,
+                           part_type: Literal["series", "volume"]) -> bool:
+    '''
+    Check if the given filename matches the given pattern.
+    '''
+    volume_match = pattern.search(filename)
+    if (volume_match and ((
+            part_type == "volume" and volume_match.start() > match.start()
+        ) or (
+            part_type == "series" and volume_match.start() < match.start()
+        ))):
+        return True
+    return False
 
 
 def extract_volume_number(filename: str) -> str | None:
@@ -242,6 +262,7 @@ def copy_and_convert_ebook_file(pbar: tqdm,
     pbar.update(0.05)
     ebook_filename = os.path.basename(source_ebook_file_path)
     vol_num = extract_volume_number(ebook_filename)
+    series_year_num = extract_series_year_number(ebook_filename)
     series_part_num = extract_series_part_number(ebook_filename)
     volume_part_num = extract_volume_part_number(ebook_filename)
     series_name = series_folder_name
@@ -270,6 +291,7 @@ def copy_and_convert_ebook_file(pbar: tqdm,
     metadata_thread = Thread(target = set_epub_series_and_index,
                              args = (temp_epub_file,
                                      series_name,
+                                     series_year_num,
                                      series_part_num,
                                      vol_num,
                                      volume_part_num,
