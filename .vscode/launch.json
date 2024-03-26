@@ -8,7 +8,7 @@
             "name": "Python: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "jln2kavita.py",
+            "program": "ebook2kavita.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [

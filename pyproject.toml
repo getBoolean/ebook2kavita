@@ -1,5 +1,5 @@
 [project]
-name = "jln2kavita"
+name = "ebook2kavita"
 version = "0.2.0"
 authors = [{ name = "getBoolean" }]
 description = "Converts an eBook folder structure to a Kavita folder structure, adding required metadata and repairing malformed EPUB files."
@@ -16,5 +16,5 @@ dependencies = [
 keywords = ["kavita", "light novel", "ebook", "converter"]
 
 [project.urls]
-Homepage = "https://github.com/getBoolean/jln2kavita"
-Issues = "https://github.com/getBoolean/jln2kavita/issues"
+Homepage = "https://github.com/getBoolean/ebook2kavita"
+Issues = "https://github.com/getBoolean/ebook2kavita/issues"
