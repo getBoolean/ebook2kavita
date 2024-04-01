@@ -41,7 +41,7 @@ python ebook2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
 - Only [supported eBook files](#supported-file-extensions) are copied to the target directory.
   - Non-EPUB eBook files are converted to EPUB using Calibre's `ebook-convert` command.
 - Adds the series name and volume number to the eBook metadata required by Kavita
-  - Series name: Root folder's of the eBook in the source directory, plus the classification (see [Source folder structure](#source-folder-structure))
+  - Series name: Root folder name of the eBook in the source directory, plus the classification (see [Source folder structure](#source-folder-structure))
   - Series part number and volume number: Extracted from the eBook filename using regex.
 - Classification is determined by the subfolders an eBook belongs to, case intensitive:
   - Light Novel
