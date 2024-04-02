@@ -34,6 +34,7 @@ python ebook2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
 - `--src`: Source directory, see [Source Folder Structure](#source-folder-structure)
 - `--target`: Target directory
 - `--dont-split-on-page-breaks`: Turn off splitting at page breaks. Normally, input files are automatically split at every page break into two files. This gives an output e-book that can be parsed faster and with less resources. However, splitting is slow and if your source file contains a very large number of page breaks, you should turn off splitting on page breaks. ([Calibre ebook-convert](https://manual.calibre-ebook.com/generated/en/ebook-convert.html#cmdoption-ebook-convert-epub-output-dont-split-on-page-breaks))
+- `--no-svg-cover`: Do not use SVG for the book cover. Use this option if your EPUB is going to be used on a device that does not support SVG, like the iPhone or the JetBook Lite. Without this option, such devices will display the cover as a blank page. ([Calibre ebook-convert](https://manual.calibre-ebook.com/generated/en/ebook-convert.html#cmdoption-ebook-convert-epub-output-no-svg-cover))
 
 ## About
 
