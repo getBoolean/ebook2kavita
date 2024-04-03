@@ -135,7 +135,7 @@ def set_epub_series_and_index(
             index += f"{volume_num}.{volume_part_num}"
         command += ["--index", index]
     else:
-        index = f"1.{folder_index}"
+        index = f"0.{folder_index + 1}"
         command += ["--index", index]
 
     while is_locked(target_epub_file_path):
