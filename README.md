@@ -38,13 +38,13 @@ python ebook2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
 
 ## About
 
-- Nothing is modified in the source directory.
-- Only [supported eBook files](#supported-file-extensions) are copied to the target directory.
-  - Non-EPUB eBook files are converted to EPUB using Calibre's `ebook-convert` command.
 - Adds the series name and volume number to the eBook metadata required by Kavita
-  - Series name: Root folder name of the eBook in the source directory, plus the classification (see [Source folder structure](#source-folder-structure))
-  - Series part number and volume number: Extracted from the eBook filename using regex.
-- Classification is determined by the subfolders an eBook belongs to, case intensitive:
+  - Series name: The first folder in the eBook's path under the source directory, plus the classification (see [Source folder structure](#source-folder-structure)) and series part number
+  - Volume number: Extracted from the eBook filename using regex.
+  - Volume part number: Extracted from the eBook filename using regex. Must be after the volume number.
+  - Series part number: Extracted from the subfolder and filename using regex. Must be before the volume number.
+- Splits eBooks from certain classification subfolders into separate series. They can have multiple classifications if the folders are nested
+- Supported series classifications (case intensitive):
   - Light Novel
   - Web Novel
   - Short Story/Stories
@@ -52,8 +52,15 @@ python ebook2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
   - Spin-off Series
   - **Fan** Translation
   - **Official** Translation
+- Only [supported eBook files](#supported-file-extensions) are copied to the target directory.
+  - Non-EPUB eBook files are converted to EPUB using Calibre's `ebook-convert` command.
+- Nothing is modified in the source directory.
 
 ### Source Folder Structure
+
+- Your eBooks must already be sorted into series folders, the folder name is applied as the series name in the metadata.
+- Only specific classification folders are supported, see the above section for the list of them, and the [source code](https://github.com/getBoolean/ebook2kavita/blob/c41f2e5e154e2aaec9584c37f13282e2860d9f6d/ebook2kavita.py#L429) for which exact supported variations.
+- eBooks in a non-classification subfolder will still be added, just without a classification.
 
 ```txt
 Source Folder
