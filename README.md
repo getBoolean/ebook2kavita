@@ -4,10 +4,11 @@ Converts an eBook folder structure to a Kavita folder structure, adding required
 
 ## Features
 
-- Groups ebook files into Kavita series based on subfolders and filenames
+- Groups ebook files into Kavita series based on the series foldername, subfolders, and the filename. The series subfolder is required, see [About](#about) for more details
 - Repair malformed `.epub` files. *(In rare cases this may be very slow even with `--dont-split-on-page-breaks` enabled)*
 - Convert eBook non-EPUB files to EPUB (See [Supported file extensions](#supported-file-extensions))
 - Automatically run Calibre plugin [DeDRM](https://github.com/noDRM/DeDRM_tools) *(only if installed)*
+- Nothing is modified in the source directory
 
 ## Usage
 
@@ -54,7 +55,7 @@ python ebook2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
   - **Official** Translation
 - Only [supported eBook files](#supported-file-extensions) are copied to the target directory.
   - Non-EPUB eBook files are converted to EPUB using Calibre's `ebook-convert` command.
-- Nothing is modified in the source directory.
+
 
 ### Source Folder Structure
 
