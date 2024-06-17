@@ -27,7 +27,7 @@ Converts an eBook folder structure to a Kavita folder structure, adding required
 ```bash
 python ebook2kavita.py --src "SOURCE_DIR" --target "TARGET_DIR"
 
-# Example: python ebook2kavita.py --src "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light Novels" --target "B:\Media Server\Light Novels"
+# Example: python ebook2kavita.py --src "B:\Dropbox\Personal\Books\Light Novels, Manga\Just Light Novels" --target "B:\data\downloads\lightnovels-v0.2"
 ```
 
 ### Arguments
