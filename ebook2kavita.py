@@ -2,6 +2,8 @@
 Script to convert an eBook folder structure to a Kavita folder structure.
 """
 
+# TODO: Fix "Saving 80,000 Gold in Another World for My Retirement 1" picks 80 for volume number
+
 import os
 import time
 import sys
